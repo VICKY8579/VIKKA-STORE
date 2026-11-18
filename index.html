@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><link rel="stylesheet" href="style.css">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VIKKA Store | Online Shopping</title>
@@ -31,7 +31,11 @@
     .add-btn { width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 6px; background: #142b4a; color: white; cursor: pointer; }
     .status { padding: 25px; background: white; border-radius: 8px; text-align: center; }
     footer { background: #142b4a; color: white; text-align: center; padding: 22px; }
-    @media(max-width:500px) { .hero h1 { font-size: 24px; } .logo { font-size: 24px; } }
+    @media(max-width:500px) {
+      .hero h1 { font-size: 24px; }
+      .logo { font-size: 24px; }
+      #productGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -70,44 +74,65 @@
     const WHATSAPP_NUMBER = '918579970090';
 
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     let allProducts = [];
     let selectedCategory = 'All';
     let cart = [];
+    window.visibleProducts = [];
 
     function safe(value) {
       return String(value ?? '').replace(/[&<>"']/g, c => ({
-        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
       })[c]);
     }
 
     async function loadProducts() {
       const grid = document.getElementById('productGrid');
+      grid.innerHTML = '<div class="status">Loading products...</div>';
+
       try {
-        const { data, error } = await db.from('products').select('*').order('id', { ascending: false });
+        const { data, error } = await db
+          .from('products')
+          .select('*')
+          .order('id', { ascending: false });
+
         if (error) throw error;
+
         allProducts = data || [];
         buildCategories();
         renderProducts();
+
       } catch (error) {
-        console.error(error);
-        grid.innerHTML = '<div class="status">Products could not be loaded. Please check the Supabase products table and access settings.</div>';
+        console.error('Supabase Error:', error);
+        grid.innerHTML =
+          '<div class="status">Products could not be loaded: ' +
+          safe(error.message) + '</div>';
       }
     }
 
     function buildCategories() {
-    const container = document.getElementById('categories');
-    const names = ['All', ...new Set(allProducts.map(p => p.category).filter(Boolean))];
+      const container = document.getElementById('categories');
+      const names = ['All', ...new Set(
+        allProducts.map(p => p.category).filter(Boolean)
+      )];
 
-    container.innerHTML = '';
+      container.innerHTML = '';
 
-    names.forEach(name => {
+      names.forEach(name => {
         const button = document.createElement('button');
-        button.className = 'category' + (name === selectedCategory ? ' active' : '');
+        button.className = 'category' +
+          (name === selectedCategory ? ' active' : '');
+
         button.textContent = name === 'All' ? 'All Products' : name;
         button.addEventListener('click', () => chooseCategory(name));
         container.appendChild(button);
-    });
-}
+      });
+    }
+
     function chooseCategory(name) {
       selectedCategory = name;
       buildCategories();
@@ -116,38 +141,52 @@
 
     function renderProducts() {
       const grid = document.getElementById('productGrid');
-      const term = document.getElementById('search').value.toLowerCase();
+      const searchBox = document.getElementById('search');
+      const term = searchBox.value.toLowerCase();
+
       const filtered = allProducts.filter(p => {
         const name = p.name || p.title || p.product_name || 'Product';
-        return (selectedCategory === 'All' || p.category === selectedCategory) &&
-          String(name).toLowerCase().includes(term);
+
+        return (
+          (selectedCategory === 'All' || p.category === selectedCategory) &&
+          String(name).toLowerCase().includes(term)
+        );
       });
 
       if (!filtered.length) {
         grid.innerHTML = '<div class="status">No products found.</div>';
+        window.visibleProducts = [];
         return;
       }
+
+      window.visibleProducts = filtered;
 
       grid.innerHTML = filtered.map((p, index) => {
         const name = p.name || p.title || p.product_name || 'Product';
         const price = p.price ?? p.selling_price ?? '';
         const image = p.image_url || p.image || p.photo || '';
         const description = p.description || '';
-        return `<article class="product-card">
-          <img src="${safe(image)}" alt="${safe(name)}" onerror="this.style.display='none'">
-          <h3>${safe(name)}</h3>
-          <p>${safe(description)}</p>
-          <div class="price">${price !== '' ? '₹' + safe(price) : 'Price unavailable'}</div>
-          <button class="add-btn" onclick="addToCart(${index})">Add to Cart</button>
-        </article>`;
-      }).join('');
 
-      window.visibleProducts = filtered;
+        return `
+          <article class="product-card">
+            ${image ? <img src="${safe(image)}" alt="${safe(name)}" onerror="this.style.display='none'"> : ''}
+            <h3>${safe(name)}</h3>
+            <p>${safe(description)}</p>
+            <div class="price">
+              ${price !== '' ? '₹' + safe(price) : 'Price unavailable'}
+            </div>
+            <button class="add-btn" onclick="addToCart(${index})">
+              Add to Cart
+            </button>
+          </article>
+        `;
+      }).join('');
     }
 
     function addToCart(index) {
       const product = window.visibleProducts[index];
       if (!product) return;
+
       cart.push(product);
       document.getElementById('cartCount').textContent = cart.length;
       alert('Product added to cart!');
@@ -158,10 +197,23 @@
         alert('Your cart is empty.');
         return;
       }
-      const lines = cart.map(p => ${p.name || p.title || p.product_name || 'Product'} - ₹${p.price ?? p.selling_price ?? 'N/A'});
-      const message = 'Hello VIKKA Store, I want to order:\n' + lines.join('\n');
-      if (confirm('Your cart has ' + cart.length + ' item(s). Continue to WhatsApp order?')) {
-        window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message), '_blank');
+
+      const lines = cart.map(p =>
+        ${p.name || p.title || p.product_name || 'Product'} - Rs. ${p.price ?? p.selling_price ?? 'N/A'}
+      );
+
+      const message =
+        'Hello VIKKA Store, I want to order:\n' + lines.join('\n');
+
+      if (confirm(
+        'Your cart has ' + cart.length +
+        ' item(s). Continue to WhatsApp order?'
+      )) {
+        window.open(
+          'https://wa.me/' + WHATSAPP_NUMBER +
+          '?text=' + encodeURIComponent(message),
+          '_blank'
+        );
       }
     }
 
