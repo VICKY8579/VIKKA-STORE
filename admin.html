@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA Store - Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#222}
+header{background:#142b4a;color:white;padding:20px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h2{margin:0}
+header a{color:#ffbd45;text-decoration:none}
+main{max-width:1000px;margin:25px auto;padding:0 16px}
+.panel{background:white;padding:22px;border-radius:12px;box-shadow:0 3px 15px #00000010;margin-bottom:22px}
+h3{color:#142b4a;margin-top:0}
+label{display:block;font-weight:bold;margin:13px 0 6px}
+input,textarea{width:100%;padding:12px;border:1px solid #ccd2dc;border-radius:7px;font-size:15px}
+textarea{min-height:85px;resize:vertical}
+button{padding:11px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+.primary{background:#142b4a;color:white;margin-top:16px;width:100%}
+.delete{background:#ffe5e5;color:#a00000}
+.edit{background:#ffbd45;color:#142b4a}
+#message{margin-top:14px;font-weight:bold}
+.product{border:1px solid #e2e5eb;padding:14px;border-radius:9px;margin:12px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.product img{width:85px;height:85px;object-fit:contain;background:#f2f2f2;border-radius:7px}
+.details{flex:1;min-width:150px}
+.actions{display:flex;gap:8px}
+.muted{color:#666;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>VIKKA STORE | Admin</h2>
+  <a href="index.html">View Store →</a>
+</header>
+
+<main>
+  <section class="panel">
+    <h3>Admin Login</h3>
+    <label>Admin Password</label>
+    <input type="password" id="adminPassword" placeholder="Enter admin password">
+    <button class="primary" onclick="login()">Login</button>
+    <p class="muted">Demo access gate only. Replace with secure server-side admin authentication before public launch.</p>
+    <div id="loginMessage"></div>
+  </section>
+
+  <div id="adminArea" hidden>
+    <section class="panel">
+      <h3 id="formTitle">Add New Product</h3>
+      <input type="hidden" id="productId">
+
+      <label>Product Name *</label>
+      <input id="name" placeholder="Enter product name">
+
+      <label>Category *</label>
+      <input id="category" placeholder="Example: Clothing, Beauty, Toys">
+
+      <label>Price (INR) *</label>
+      <input id="price" type="number" min="0" step="0.01" placeholder="Enter price">
+
+      <label>Product Image URL</label>
+      <input id="image_url" type="url" placeholder="Paste product image URL">
+
+      <label>Description</label>
+      <textarea id="description" placeholder="Write product details"></textarea>
+
+      <button class="primary" onclick="saveProduct()">Save Product</button>
+      <button class="edit" onclick="resetForm()" style="margin-top:10px;width:100%">Clear Form</button>
+      <div id="message"></div>
+    </section>
+
+    <section class="panel">
+      <h3>Manage Products</h3>
+      <button class="edit" onclick="loadProducts()">Refresh Products</button>
+      <div id="productList" style="margin-top:15px">Loading products...</div>
+    </section>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8amspsA0ewiZXZomX8Nw_5YE14um-';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Temporary access gate, NOT secure authentication.
+const ADMIN_PASSWORD = 'CHANGE_THIS_PASSWORD';
+
+function login(){
+  const password = document.getElementById('adminPassword').value;
+  if(password === ADMIN_PASSWORD){
+    document.getElementById('adminArea').hidden = false;
+    document.getElementById('loginMessage').textContent = 'Admin panel opened.';
+    loadProducts();
+  }else{
+    document.getElementById('loginMessage').textContent = 'Incorrect password.';
+  }
+}
+
+function escapeHTML(value){
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+
+function showMessage(message, success){
+  const el = document.getElementById('message');
+  el.textContent = message;
+  el.style.color = success ? 'green' : 'red';
+}
+
+async function loadProducts(){
+  const list = document.getElementById('productList');
+  list.textContent = 'Loading products...';
+  const {data,error} = await db.from('products').select('*').order('id',{ascending:false});
+  if(error){
+    list.textContent = 'Could not load products: ' + error.message;
+    return;
+  }
+  if(!data || !data.length){
+    list.textContent = 'No products found.';
+    return;
+  }
+  list.innerHTML = data.map(p => `
+    <div class="product">
+      <img src="${escapeHTML(p.image_url || '')}" alt="" onerror="this.style.display='none'">
+      <div class="details">
+        <strong>${escapeHTML(p.name || p.title || 'Product')}</strong>
+        <div>₹${escapeHTML(p.price ?? '')}</div>
+        <div class="muted">${escapeHTML(p.category || '')}</div>
+      </div>
+      <div class="actions">
+        <button class="edit" onclick="editProduct('${escapeHTML(p.id)}')">Edit</button>
+        <button class="delete" onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  window.adminProducts = data;
+}
+
+async function saveProduct(){
+  const id = document.getElementById('productId').value;
+  const name = document.getElementById('name').value.trim();
+  const category = document.getElementById('category').value.trim();
+  const price = document.getElementById('price').value;
+  const image_url = document.getElementById('image_url').value.trim();
+  const description = document.getElementById('description').value.trim();
+
+  if(!name || !category || price === '' || Number(price) < 0){
+    showMessage('Please enter product name, category and a valid price.',false);
+    return;
+  }
+
+  const product = {name,category,price:Number(price),image_url,description};
+  let result;
+
+  if(id){
+    result = await db.from('products').update(product).eq('id',id);
+  }else{
+    result = await db.from('products').insert([product]);
+  }
+
+  if(result.error){
+    showMessage('Save failed: ' + result.error.message,false);
+    return;
+  }
+
+  showMessage('Product saved successfully!',true);
+  resetForm();
+  loadProducts();
+}
+
+function editProduct(id){
+  const p = (window.adminProducts || []).find(x => String(x.id) === String(id));
+  if(!p) return;
+  document.getElementById('productId').value = p.id;
+  document.getElementById('name').value = p.name || p.title || '';
+  document.getElementById('category').value = p.category || '';
+  document.getElementById('price').value = p.price ?? '';
+  document.getElementById('image_url').value = p.image_url || '';
+  document.getElementById('description').value = p.description || '';
+  document.getElementById('formTitle').textContent = 'Edit Product';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteProduct(id){
+  if(!confirm('Are you sure you want to delete this product?')) return;
+  const {error} = await db.from('products').delete().eq('id',id);
+  if(error){
+    showMessage('Delete failed: ' + error.message,false);
+    return;
+  }
+  showMessage('Product deleted.',true);
+  loadProducts();
+}
+
+function resetForm(){
+  ['productId','name','category','price','image_url','description'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('formTitle').textContent = 'Add New Product';
+}
+</script>
+</body>
+</html>
