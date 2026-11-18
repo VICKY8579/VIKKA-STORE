@@ -126,7 +126,6 @@
         const button = document.createElement('button');
         button.className = 'category' +
           (name === selectedCategory ? ' active' : '');
-
         button.textContent = name === 'All' ? 'All Products' : name;
         button.addEventListener('click', () => chooseCategory(name));
         container.appendChild(button);
@@ -158,66 +157,3 @@
         window.visibleProducts = [];
         return;
       }
-
-      window.visibleProducts = filtered;
-
-      grid.innerHTML = filtered.map((p, index) => {
-        const name = p.name || p.title || p.product_name || 'Product';
-        const price = p.price ?? p.selling_price ?? '';
-        const image = p.image_url || p.image || p.photo || '';
-        const description = p.description || '';
-
-        return `
-          <article class="product-card">
-            
-            <h3>${safe(name)}</h3>
-            <p>${safe(description)}</p>
-          ${image ? '<img src="' + safe(image) + '" alt="' + safe(name) + '" onerror="this.style.display=\'none\'">' : ''}
-              <div class="price">${price !== '' ? '₹' + safe(price) : 'Price unavailable'}</div>
-            </div>
-            <button class="add-btn" onclick="addToCart(${index})">
-              Add to Cart
-            </button>
-          </article>
-        `;
-      }).join('');
-    }
-
-    function addToCart(index) {
-      const product = window.visibleProducts[index];
-      if (!product) return;
-
-      cart.push(product);
-      document.getElementById('cartCount').textContent = cart.length;
-      alert('Product added to cart!');
-    }
-
-    function showCart() {
-      if (!cart.length) {
-        alert('Your cart is empty.');
-        return;
-      }
-
-      const lines = cart.map(p =>
-        ${p.name || p.title || p.product_name || 'Product'} - Rs. ${p.price ?? p.selling_price ?? 'N/A'}
-      );
-
-      const message =
-        'Hello VIKKA Store, I want to order:\n' + lines.join('\n');
-
-      if (confirm(
-        'Your cart has ' + cart.length +
-        ' item(s). Continue to WhatsApp order?'
-      )) {
-        window.open(
-          'https://wa.me/' + WHATSAPP_NUMBER +
-          '?text=' + encodeURIComponent(message),
-          '_blank'
-        );
-      }
-    }
-
-    loadProducts();
-  </script>
-</body>
-</html>
