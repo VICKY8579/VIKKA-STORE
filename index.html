@@ -95,12 +95,19 @@
     }
 
     function buildCategories() {
-      const names = ['All', ...new Set(allProducts.map(p => p.category).filter(Boolean))];
-      document.getElementById('categories').innerHTML = names.map(name =>
-        <button class="category ${name === selectedCategory ? 'active' : ''}" onclick="chooseCategory('${safe(name)}')">${name === 'All' ? 'All Products' : safe(name)}</button>
-      ).join('');
-    }
+    const container = document.getElementById('categories');
+    const names = ['All', ...new Set(allProducts.map(p => p.category).filter(Boolean))];
 
+    container.innerHTML = '';
+
+    names.forEach(name => {
+        const button = document.createElement('button');
+        button.className = 'category' + (name === selectedCategory ? ' active' : '');
+        button.textContent = name === 'All' ? 'All Products' : name;
+        button.addEventListener('click', () => chooseCategory(name));
+        container.appendChild(button);
+    });
+}
     function chooseCategory(name) {
       selectedCategory = name;
       buildCategories();
