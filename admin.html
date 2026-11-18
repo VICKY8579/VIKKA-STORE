@@ -3,41 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIKKA Admin Panel</title>
+<title>VIKKA Admin Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#202b3c}
-header{background:#101c35;color:white;padding:19px}
+header{background:#101c35;color:white;padding:20px}
 header h2{margin:0}
-header p{margin:6px 0 0;color:#c5d1e5}
+header p{color:#c5d1e5;margin:6px 0 0}
 main{max-width:1150px;margin:auto;padding:16px}
 .card{background:white;padding:19px;border-radius:13px;margin-bottom:17px;box-shadow:0 3px 14px #0000000b}
 h3{margin-top:0}
-input,select,textarea{
-width:100%;padding:12px;margin:6px 0 13px;
-border:1px solid #d8deea;border-radius:8px;font-size:15px
-}
+input,select,textarea{width:100%;padding:12px;margin:6px 0 13px;border:1px solid #d8deea;border-radius:8px;font-size:15px}
 textarea{min-height:85px}
 label{font-weight:600;font-size:14px}
-button{border:0;border-radius:8px;padding:11px 16px;
-background:#174b9b;color:white;font-weight:bold;cursor:pointer}
+button{border:0;border-radius:8px;padding:11px 16px;background:#174b9b;color:white;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5}
-.green{background:#13844e}
-.red{background:#c63d3d}
-.yellow{background:#e9a923;color:#222}
-.gray{background:#667085}
+.green{background:#13844e}.red{background:#c63d3d}
+.yellow{background:#e9a923;color:#222}.gray{background:#667085}
 .hidden{display:none!important}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .stat{background:#edf3ff;padding:17px;border-radius:10px}
 .stat b{font-size:25px;display:block;margin-top:8px}
 .row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.product{border:1px solid #e5e9f0;padding:12px;border-radius:10px}
+.product{border:1px solid #e5e9f0;padding:12px;border-radius:10px;min-width:0}
 .product img{width:100%;height:160px;object-fit:contain;background:#f5f5f5;border-radius:8px}
 .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .actions button{padding:8px 11px}
 #preview{max-width:160px;max-height:150px;object-fit:contain;display:none;margin:8px 0}
-.status{font-size:12px;font-weight:bold}
 .muted{color:#777;font-size:13px}
 @media(max-width:650px){.row{grid-template-columns:1fr}}
 </style>
@@ -50,7 +43,6 @@ button:disabled{opacity:.5}
 </header>
 
 <main>
-
 <section class="card" id="loginBox">
 <h3>Admin Login</h3>
 <label>Email</label>
@@ -77,7 +69,6 @@ button:disabled{opacity:.5}
 
 <section class="card">
 <h3 id="formTitle">➕ Add New Product</h3>
-
 <input type="hidden" id="editId">
 
 <div class="row">
@@ -164,12 +155,13 @@ Show this product in the store
 <button class="yellow" onclick="loadProducts()">Refresh Products</button>
 <div id="productList" class="grid" style="margin-top:15px"></div>
 </section>
-
 </div>
 </main>
 
 <script>
+// YOUR ORIGINAL VIKKA SUPABASE PROJECT
 const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
+
 const SUPABASE_KEY = "sb_publishable_8amspsA0ewiZXZomX8Nw_5YE14um-";
 
 const db = window.supabase.createClient(
@@ -215,7 +207,7 @@ async function login(){
  if(adminError || !admin){
   await db.auth.signOut();
   currentUser=null;
-  el("loginMsg").textContent="This account is not authorized as admin.";
+  el("loginMsg").textContent="Admin authorization failed: "+(adminError?.message||"Not an admin");
   el("loginBtn").disabled=false;
   return;
  }
@@ -225,6 +217,7 @@ async function login(){
 
 async function checkSession(){
  const {data}=await db.auth.getSession();
+
  if(data.session){
   currentUser=data.session.user;
 
@@ -240,12 +233,14 @@ async function checkSession(){
   }
 
   await db.auth.signOut();
+  currentUser=null;
  }
 }
 
 function showDashboard(){
  el("loginBox").classList.add("hidden");
  el("dashboard").classList.remove("hidden");
+ el("loginBtn").disabled=false;
  loadProducts();
 }
 
@@ -291,19 +286,19 @@ async function saveProduct(){
  const price=Number(el("price").value);
  const imageUrl=el("imageUrl").value.trim();
  const mrp=Number(el("mrp").value)||0;
- const stock=Number(el("stock").value)||0;
+ const stock=Number(el("stock").value);
 
  if(!name || !price || !imageUrl){
   alert("Product Name, Selling Price and Image URL are required.");
   return;
  }
 
- if(price<0 || mrp<0 || stock<0){
+ if(price<0 || mrp<0 || stock<0 || !Number.isFinite(stock)){
   alert("Enter valid positive values.");
   return;
  }
 
- const data={
+ const productData={
   name:name,
   category:el("category").value,
   brand:el("brand").value.trim(),
@@ -325,9 +320,9 @@ async function saveProduct(){
  let result;
 
  if(id){
-  result=await db.from("products").update(data).eq("id",id);
+  result=await db.from("products").update(productData).eq("id",id);
  }else{
-  result=await db.from("products").insert(data);
+  result=await db.from("products").insert(productData);
  }
 
  el("saveBtn").disabled=false;
@@ -366,6 +361,13 @@ async function loadProducts(){
  filterProducts();
 }
 
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
 function filterProducts(){
  const q=el("search").value.toLowerCase();
  const cat=el("filterCategory").value;
@@ -378,33 +380,21 @@ function filterProducts(){
 
  el("productList").innerHTML=filtered.map(p=>`
  <div class="product">
-  <img src="${escapeAttr(p.image || p.image_url || "")}"
+  <img src="${escapeHTML(p.image || p.image_url || "")}"
    onerror="this.style.display='none'" alt="Product">
   <h4>${escapeHTML(p.name||"")}</h4>
   <p>Brand: ${escapeHTML(p.brand||"-")}</p>
   <b>₹${Number(p.price||0)}</b>
   <p class="muted">MRP: ₹${Number(p.mrp||0)}</p>
   <p>Stock: ${Number(p.stock||0)}</p>
-  <p class="status">${p.is_active===false?"INACTIVE":"ACTIVE"}</p>
+  <p>${p.is_active===false?"INACTIVE":"ACTIVE"}</p>
   <div class="actions">
-   <button class="yellow" onclick="editProduct('${escapeAttr(p.id)}')">Edit</button>
-   <button class="gray" onclick="toggleProduct('${escapeAttr(p.id)}')">
-   ${p.is_active===false?"Activate":"Hide"}</button>
-   <button class="red" onclick="deleteProduct('${escapeAttr(p.id)}')">Delete</button>
+   <button class="yellow" onclick="editProduct('${escapeHTML(p.id)}')">Edit</button>
+   <button class="gray" onclick="toggleProduct('${escapeHTML(p.id)}')">${p.is_active===false?"Activate":"Hide"}</button>
+   <button class="red" onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
   </div>
  </div>
  `).join("") || "<p>No products found.</p>";
-}
-
-function escapeHTML(value){
- return String(value).replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",
-  '"':"&quot;","'":"&#39;"
- })[c]);
-}
-
-function escapeAttr(value){
- return escapeHTML(value);
 }
 
 function editProduct(id){
@@ -425,7 +415,6 @@ function editProduct(id){
  el("isActive").checked=p.is_active!==false;
 
  previewImage();
-
  el("formTitle").textContent="✏️ Edit Product";
  el("saveBtn").textContent="Update Product";
  window.scrollTo({top:0,behavior:"smooth"});
@@ -448,7 +437,11 @@ async function deleteProduct(id){
 
  const {error}=await db.from("products").delete().eq("id",id);
 
- if(error){alert("Delete failed: "+error.message);return}
+ if(error){
+  alert("Delete failed: "+error.message);
+  return;
+ }
+
  await loadProducts();
 }
 
