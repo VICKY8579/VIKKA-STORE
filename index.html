@@ -172,7 +172,7 @@
             ${image ? <img src="${safe(image)}" alt="${safe(name)}" onerror="this.style.display='none'"> : ''}
             <h3>${safe(name)}</h3>
             <p>${safe(description)}</p>
-            <div class="price">
+          ${image ? '<img src="' + safe(image) + '" alt="' + safe(name) + '" onerror="this.style.display=\'none\'">' : ''}
               ${price !== '' ? '₹' + safe(price) : 'Price unavailable'}
             </div>
             <button class="add-btn" onclick="addToCart(${index})">
