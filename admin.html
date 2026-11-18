@@ -2,584 +2,457 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIKKA Store | Admin Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIKKA Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#222}
-header{background:#142b4a;color:white;padding:17px 4%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+body{margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#202b3c}
+header{background:#101c35;color:white;padding:19px}
 header h2{margin:0}
-header a{color:#ffbd45;text-decoration:none}
-button{border:0;border-radius:7px;padding:11px 15px;cursor:pointer;font-weight:bold}
-.primary{background:#142b4a;color:white}
-.gold{background:#ffbd45;color:#142b4a}
-.danger{background:#ffe2e2;color:#a00000}
-.success{background:#e0f5e8;color:#087443}
-main{max-width:1150px;margin:25px auto;padding:0 15px}
-.panel{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 12px #0000000c;margin-bottom:20px}
-h3{color:#142b4a;margin-top:0}
-label{display:block;font-weight:bold;margin:12px 0 6px}
-input,textarea,select{width:100%;padding:12px;border:1px solid #ccd2dc;border-radius:7px;font-size:15px;background:white}
-textarea{min-height:75px;resize:vertical}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px}
-.stat{background:#edf3fa;padding:18px;border-radius:10px}
-.stat strong{display:block;font-size:25px;color:#142b4a;margin-top:8px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.tabs button{background:#e7edf5;color:#142b4a}
-.tabs button.active{background:#142b4a;color:white}
-.product,.order{border:1px solid #e3e7ed;border-radius:9px;padding:13px;margin:12px 0;display:flex;gap:13px;align-items:center;flex-wrap:wrap}
-.product img{width:75px;height:75px;object-fit:contain;background:#f1f1f1;border-radius:7px}
-.details{flex:1;min-width:150px}
-.actions{display:flex;gap:7px;flex-wrap:wrap}
-.muted{font-size:13px;color:#697386}
-.message{padding:12px;margin-top:12px;border-radius:7px;display:none;overflow-wrap:anywhere}
-.message.error{display:block;background:#ffe9e9;color:#a00000}
-.message.ok{display:block;background:#e3f7e9;color:#087443}
-.hidden{display:none!important}
-#loginPanel{max-width:450px;margin:55px auto}
-small{color:#666}
-@media(max-width:500px){
- header h2{font-size:19px}
- .panel{padding:15px}
- .product img{width:60px;height:60px}
+header p{margin:6px 0 0;color:#c5d1e5}
+main{max-width:1150px;margin:auto;padding:16px}
+.card{background:white;padding:19px;border-radius:13px;margin-bottom:17px;box-shadow:0 3px 14px #0000000b}
+h3{margin-top:0}
+input,select,textarea{
+width:100%;padding:12px;margin:6px 0 13px;
+border:1px solid #d8deea;border-radius:8px;font-size:15px
 }
+textarea{min-height:85px}
+label{font-weight:600;font-size:14px}
+button{border:0;border-radius:8px;padding:11px 16px;
+background:#174b9b;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.green{background:#13844e}
+.red{background:#c63d3d}
+.yellow{background:#e9a923;color:#222}
+.gray{background:#667085}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.stat{background:#edf3ff;padding:17px;border-radius:10px}
+.stat b{font-size:25px;display:block;margin-top:8px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.product{border:1px solid #e5e9f0;padding:12px;border-radius:10px}
+.product img{width:100%;height:160px;object-fit:contain;background:#f5f5f5;border-radius:8px}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.actions button{padding:8px 11px}
+#preview{max-width:160px;max-height:150px;object-fit:contain;display:none;margin:8px 0}
+.status{font-size:12px;font-weight:bold}
+.muted{color:#777;font-size:13px}
+@media(max-width:650px){.row{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
 
 <header>
-  <h2>VIKKA STORE | Admin</h2>
-  <div class="actions">
-    <a href="index.html">View Store →</a>
-    <button id="logoutButton" class="gold hidden">Logout</button>
-  </div>
+<h2>🛍️ VIKKA ADMIN</h2>
+<p>Store Management Dashboard</p>
 </header>
 
 <main>
 
-<section class="panel" id="loginPanel">
-  <h3>Admin Login</h3>
-  <label>Email Address</label>
-  <input id="email" type="email" placeholder="Enter admin email">
-  <label>Password</label>
-  <input id="password" type="password" placeholder="Enter password">
-  <button class="primary" id="loginButton" style="width:100%;margin-top:16px">Login Securely</button>
-  <div id="loginMessage" class="message"></div>
-  <p class="muted">Only an authorized VIKKA Store administrator can access this dashboard.</p>
+<section class="card" id="loginBox">
+<h3>Admin Login</h3>
+<label>Email</label>
+<input id="email" type="email" placeholder="Admin Email">
+<label>Password</label>
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()" id="loginBtn">Login</button>
+<p id="loginMsg" class="muted"></p>
 </section>
 
-<section id="dashboard" class="hidden">
+<div id="dashboard" class="hidden">
 
-  <div class="grid">
-    <div class="stat">Total Products<strong id="totalProducts">0</strong></div>
-    <div class="stat">Total Orders<strong id="totalOrders">0</strong></div>
-    <div class="stat">Customers<strong id="totalCustomers">0</strong></div>
-    <div class="stat">Sales Amount<strong id="totalSales">₹0</strong></div>
-  </div>
-
-  <section class="panel" style="margin-top:20px">
-    <div class="tabs">
-      <button class="active" data-tab="productsTab">Products</button>
-      <button data-tab="ordersTab">Orders</button>
-    </div>
-
-    <div id="productsTab">
-      <h3 id="formTitle">Add New Product</h3>
-
-      <input type="hidden" id="productId">
-
-      <div class="grid">
-        <div>
-          <label>Product Name *</label>
-          <input id="name" placeholder="Product name">
-        </div>
-        <div>
-          <label>Category *</label>
-          <input id="category" placeholder="Clothing, Beauty, Toys">
-        </div>
-        <div>
-          <label>Brand</label>
-          <input id="brand" placeholder="Brand name">
-        </div>
-        <div>
-          <label>Selling Price (₹) *</label>
-          <input id="price" type="number" min="0" step="0.01">
-        </div>
-        <div>
-          <label>MRP (₹)</label>
-          <input id="mrp" type="number" min="0" step="0.01">
-        </div>
-        <div>
-          <label>Stock Quantity</label>
-          <input id="stock" type="number" min="0" step="1" value="0">
-        </div>
-        <div>
-          <label>Delivery Information</label>
-          <input id="delivery" placeholder="Example: 3-5 days">
-        </div>
-        <div>
-          <label>Return Policy</label>
-          <input id="returnPolicy" placeholder="Example: 7 days return">
-        </div>
-      </div>
-
-      <label>Main Product Image URL</label>
-      <input id="image_url" type="url" placeholder="https://example.com/product.jpg">
-
-      <label>Product Description</label>
-      <textarea id="description" placeholder="Write product details"></textarea>
-
-      <label>
-        <input id="is_active" type="checkbox" checked style="width:auto">
-        Show this product in the store
-      </label>
-
-      <div class="actions" style="margin-top:15px">
-        <button class="primary" id="saveButton">Save Product</button>
-        <button class="gold" id="clearButton">Clear Form</button>
-      </div>
-      <div id="productMessage" class="message"></div>
-
-      <hr style="border:0;border-top:1px solid #eee;margin:22px 0">
-
-      <h3>Manage Products</h3>
-      <button class="gold" id="refreshProducts">Refresh Products</button>
-      <div id="productList">Loading products...</div>
-    </div>
-
-    <div id="ordersTab" class="hidden">
-      <h3>Customer Orders</h3>
-      <button class="gold" id="refreshOrders">Refresh Orders</button>
-      <div id="orderList">Loading orders...</div>
-    </div>
-  </section>
-
+<section class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+<h3>Welcome to VIKKA</h3>
+<button class="red" onclick="logout()">Logout</button>
+</div>
+<div class="grid">
+<div class="stat">Total Products<b id="total">0</b></div>
+<div class="stat">Active Products<b id="active">0</b></div>
+<div class="stat">Out of Stock<b id="outstock">0</b></div>
+</div>
 </section>
+
+<section class="card">
+<h3 id="formTitle">➕ Add New Product</h3>
+
+<input type="hidden" id="editId">
+
+<div class="row">
+<div>
+<label>Product Name *</label>
+<input id="name" placeholder="Product Name">
+</div>
+<div>
+<label>Category *</label>
+<select id="category">
+<option value="CLOTHING">Clothing</option>
+<option value="GROCERY">Grocery</option>
+<option value="BEAUTY">Beauty</option>
+<option value="KIDS">Kids</option>
+<option value="GENERAL">General</option>
+<option value="ELECTRONICS">Electronics</option>
+<option value="HOME">Home & Kitchen</option>
+</select>
+</div>
+<div>
+<label>Brand</label>
+<input id="brand" placeholder="Brand Name">
+</div>
+</div>
+
+<div class="row">
+<div>
+<label>Selling Price (₹) *</label>
+<input id="price" type="number" min="0" placeholder="Selling Price">
+</div>
+<div>
+<label>MRP (₹)</label>
+<input id="mrp" type="number" min="0" placeholder="MRP">
+</div>
+<div>
+<label>Stock Quantity</label>
+<input id="stock" type="number" min="0" value="10">
+</div>
+</div>
+
+<div class="row">
+<div>
+<label>Delivery Information</label>
+<input id="delivery" value="7-10 DAYS">
+</div>
+<div>
+<label>Return Policy</label>
+<input id="returnPolicy" value="15 DAYS">
+</div>
+</div>
+
+<label>Main Product Image URL *</label>
+<input id="imageUrl" placeholder="https://example.com/product.jpg" oninput="previewImage()">
+<img id="preview" alt="Product Preview">
+
+<label>Product Description</label>
+<textarea id="description" placeholder="Write product details..."></textarea>
+
+<label style="display:block;margin:10px 0">
+<input type="checkbox" id="isActive" checked style="width:auto;margin:0">
+Show this product in the store
+</label>
+
+<div class="actions">
+<button class="green" onclick="saveProduct()" id="saveBtn">Save Product</button>
+<button class="yellow" onclick="clearForm()">Clear Form</button>
+</div>
+<p id="message" class="muted"></p>
+</section>
+
+<section class="card">
+<h3>📦 Manage Products</h3>
+<input id="search" placeholder="Search product by name or brand..." oninput="filterProducts()">
+<select id="filterCategory" onchange="filterProducts()">
+<option value="">All Categories</option>
+<option>CLOTHING</option>
+<option>GROCERY</option>
+<option>BEAUTY</option>
+<option>KIDS</option>
+<option>GENERAL</option>
+<option>ELECTRONICS</option>
+<option>HOME</option>
+</select>
+<button class="yellow" onclick="loadProducts()">Refresh Products</button>
+<div id="productList" class="grid" style="margin-top:15px"></div>
+</section>
+
+</div>
 </main>
 
 <script>
-'use strict';
-
-const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8amspsA0ewiZXZomX8Nw_5YE14um-";
 
 const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
+ SUPABASE_URL,
+ SUPABASE_KEY
 );
-
-const $ = id => document.getElementById(id);
 
 let products = [];
 let currentUser = null;
 
-function message(id,text,type){
-  const el = $(id);
-  el.textContent = text;
-  el.className = 'message ' + type;
-}
-
-function clearMessage(id){
-  $(id).textContent = '';
-  $(id).className = 'message';
-}
-
-function money(value){
-  const n = Number(value || 0);
-  return '₹' + n.toLocaleString('en-IN');
-}
-
-function safeImage(value){
-  if(!value) return '';
-  try{
-    const url = new URL(value);
-    return ['http:','https:'].includes(url.protocol) ? url.href : '';
-  }catch{
-    return '';
-  }
-}
+const el = id => document.getElementById(id);
 
 async function login(){
-  const email = $('email').value.trim();
-  const password = $('password').value;
+ const email=el("email").value.trim();
+ const password=el("password").value;
 
-  if(!email || !password){
-    message('loginMessage','Enter email and password.','error');
-    return;
+ if(!email || !password){
+  el("loginMsg").textContent="Email and password required";
+  return;
+ }
+
+ el("loginBtn").disabled=true;
+ el("loginMsg").textContent="Checking login...";
+
+ const {data,error}=await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  el("loginMsg").textContent=error.message;
+  el("loginBtn").disabled=false;
+  return;
+ }
+
+ currentUser=data.user;
+
+ const {data:admin,error:adminError}=await db
+  .from("store_admins")
+  .select("user_id")
+  .eq("user_id",currentUser.id)
+  .maybeSingle();
+
+ if(adminError || !admin){
+  await db.auth.signOut();
+  currentUser=null;
+  el("loginMsg").textContent="This account is not authorized as admin.";
+  el("loginBtn").disabled=false;
+  return;
+ }
+
+ showDashboard();
+}
+
+async function checkSession(){
+ const {data}=await db.auth.getSession();
+ if(data.session){
+  currentUser=data.session.user;
+
+  const {data:admin,error}=await db
+   .from("store_admins")
+   .select("user_id")
+   .eq("user_id",currentUser.id)
+   .maybeSingle();
+
+  if(admin && !error){
+   showDashboard();
+   return;
   }
 
-  $('loginButton').disabled = true;
-  $('loginButton').textContent = 'Checking...';
+  await db.auth.signOut();
+ }
+}
 
-  try{
-    const {data,error} = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if(error) throw error;
-
-    currentUser = data.user;
-
-    const {data:admin,error:adminError} = await db
-      .from('store_admins')
-      .select('user_id')
-      .eq('user_id',currentUser.id)
-      .maybeSingle();
-
-    if(adminError) throw adminError;
-
-    if(!admin){
-      await db.auth.signOut();
-      currentUser = null;
-      throw new Error('This account is not authorized as a VIKKA administrator.');
-    }
-
-    $('loginPanel').classList.add('hidden');
-    $('dashboard').classList.remove('hidden');
-    $('logoutButton').classList.remove('hidden');
-
-    await refreshDashboard();
-
-  }catch(error){
-    message('loginMessage',error.message || 'Login failed.','error');
-  }finally{
-    $('loginButton').disabled = false;
-    $('loginButton').textContent = 'Login Securely';
-  }
+function showDashboard(){
+ el("loginBox").classList.add("hidden");
+ el("dashboard").classList.remove("hidden");
+ loadProducts();
 }
 
 async function logout(){
-  await db.auth.signOut();
-  currentUser = null;
-  $('dashboard').classList.add('hidden');
-  $('logoutButton').classList.add('hidden');
-  $('loginPanel').classList.remove('hidden');
-  $('password').value = '';
-  message('loginMessage','You have been logged out.','ok');
+ await db.auth.signOut();
+ currentUser=null;
+ el("dashboard").classList.add("hidden");
+ el("loginBox").classList.remove("hidden");
+ el("password").value="";
+ el("loginBtn").disabled=false;
 }
 
-async function refreshDashboard(){
-  await Promise.all([
-    loadProducts(),
-    loadOrders()
-  ]);
+function previewImage(){
+ const url=el("imageUrl").value.trim();
+ const img=el("preview");
+ if(!url){img.style.display="none";return}
+ img.src=url;
+ img.style.display="block";
+ img.onerror=()=>{img.style.display="none"};
 }
 
-async function loadProducts(){
-  $('productList').textContent = 'Loading products...';
-
-  try{
-    const {data,error} = await db
-      .from('products')
-      .select('*')
-      .order('id',{ascending:false});
-
-    if(error) throw error;
-
-    products = data || [];
-    $('totalProducts').textContent = products.length;
-
-    renderProducts();
-
-  }catch(error){
-    $('productList').textContent = 'Product loading failed: ' + error.message;
-  }
-}
-
-function renderProducts(){
-  const list = $('productList');
-  list.replaceChildren();
-
-  if(!products.length){
-    list.textContent = 'No products found.';
-    return;
-  }
-
-  products.forEach(product=>{
-    const card = document.createElement('div');
-    card.className = 'product';
-
-    const image = document.createElement('img');
-    const imageUrl = safeImage(product.image_url || product.image || '');
-
-    if(imageUrl){
-      image.src = imageUrl;
-      image.alt = product.name || 'Product';
-    }else{
-      image.style.display = 'none';
-    }
-
-    image.onerror = ()=>image.style.display='none';
-
-    const details = document.createElement('div');
-    details.className = 'details';
-
-    const title = document.createElement('strong');
-    title.textContent = product.name || 'Product';
-
-    const price = document.createElement('div');
-    price.textContent = money(product.price);
-
-    const info = document.createElement('div');
-    info.className = 'muted';
-    info.textContent =
-      (product.category || '') +
-      ' | Stock: ' + (product.stock ?? 'Not set') +
-      ' | ' + (product.is_active === false ? 'Hidden' : 'Active');
-
-    details.append(title,price,info);
-
-    const actions = document.createElement('div');
-    actions.className = 'actions';
-
-    const edit = document.createElement('button');
-    edit.className = 'gold';
-    edit.textContent = 'Edit';
-    edit.onclick = ()=>editProduct(product.id);
-
-    const del = document.createElement('button');
-    del.className = 'danger';
-    del.textContent = 'Delete';
-    del.onclick = ()=>deleteProduct(product.id);
-
-    actions.append(edit,del);
-    card.append(image,details,actions);
-    list.appendChild(card);
-  });
-}
-
-function resetForm(){
-  [
-    'productId','name','category','brand','price','mrp',
-    'stock','delivery','returnPolicy','image_url','description'
-  ].forEach(id=>$(id).value='');
-
-  $('stock').value = '0';
-  $('is_active').checked = true;
-  $('formTitle').textContent = 'Add New Product';
-  clearMessage('productMessage');
-}
-
-function editProduct(id){
-  const product = products.find(p=>String(p.id)===String(id));
-  if(!product) return;
-
-  $('productId').value = product.id;
-  $('name').value = product.name || '';
-  $('category').value = product.category || '';
-  $('brand').value = product.brand || '';
-  $('price').value = product.price ?? '';
-  $('mrp').value = product.mrp ?? '';
-  $('stock').value = product.stock ?? 0;
-  $('delivery').value = product.delivery || '';
-  $('returnPolicy').value = product.returnPolicy || '';
-  $('image_url').value = product.image_url || product.image || '';
-  $('description').value = product.description || '';
-  $('is_active').checked = product.is_active !== false;
-
-  $('formTitle').textContent = 'Edit Product';
-  $('productsTab').scrollIntoView({behavior:'smooth'});
+function clearForm(){
+ el("editId").value="";
+ ["name","brand","price","mrp","imageUrl","description"].forEach(id=>el(id).value="");
+ el("category").value="CLOTHING";
+ el("stock").value="10";
+ el("delivery").value="7-10 DAYS";
+ el("returnPolicy").value="15 DAYS";
+ el("isActive").checked=true;
+ el("preview").style.display="none";
+ el("formTitle").textContent="➕ Add New Product";
+ el("saveBtn").textContent="Save Product";
+ el("message").textContent="";
 }
 
 async function saveProduct(){
-  clearMessage('productMessage');
+ if(!currentUser){
+  alert("Please login first");
+  return;
+ }
 
-  const id = $('productId').value;
-  const name = $('name').value.trim();
-  const category = $('category').value.trim();
-  const price = Number($('price').value);
-  const mrpValue = $('mrp').value;
-  const stockValue = $('stock').value;
-  const imageUrl = $('image_url').value.trim();
+ const name=el("name").value.trim();
+ const price=Number(el("price").value);
+ const imageUrl=el("imageUrl").value.trim();
+ const mrp=Number(el("mrp").value)||0;
+ const stock=Number(el("stock").value)||0;
 
-  if(!name || !category || $('price').value==='' ||
-     !Number.isFinite(price) || price<0){
-    message('productMessage','Enter a valid name, category and price.','error');
-    return;
-  }
+ if(!name || !price || !imageUrl){
+  alert("Product Name, Selling Price and Image URL are required.");
+  return;
+ }
 
-  if(mrpValue!=='' && Number(mrpValue)<price){
-    message('productMessage','MRP should not be less than selling price.','error');
-    return;
-  }
+ if(price<0 || mrp<0 || stock<0){
+  alert("Enter valid positive values.");
+  return;
+ }
 
-  if(stockValue!=='' && (!Number.isInteger(Number(stockValue)) || Number(stockValue)<0)){
-    message('productMessage','Enter a valid stock quantity.','error');
-    return;
-  }
+ const data={
+  name:name,
+  category:el("category").value,
+  brand:el("brand").value.trim(),
+  price:price,
+  mrp:mrp,
+  stock:stock,
+  delivery:el("delivery").value.trim(),
+  returnPolicy:el("returnPolicy").value.trim(),
+  description:el("description").value.trim(),
+  image:imageUrl,
+  image_url:imageUrl,
+  is_active:el("isActive").checked
+ };
 
-  if(imageUrl && !safeImage(imageUrl)){
-    message('productMessage','Enter a valid HTTP or HTTPS image URL.','error');
-    return;
-  }
+ const id=el("editId").value;
+ el("saveBtn").disabled=true;
+ el("message").textContent="Saving product...";
 
-  const product = {
-    name,
-    category,
-    brand: $('brand').value.trim(),
-    price,
-    mrp: mrpValue==='' ? null : Number(mrpValue),
-    stock: stockValue==='' ? 0 : Number(stockValue),
-    delivery: $('delivery').value.trim(),
-    returnPolicy: $('returnPolicy').value.trim(),
-    image_url: imageUrl,
-    description: $('description').value.trim(),
-    is_active: $('is_active').checked
-  };
+ let result;
 
-  $('saveButton').disabled = true;
-  $('saveButton').textContent = 'Saving...';
+ if(id){
+  result=await db.from("products").update(data).eq("id",id);
+ }else{
+  result=await db.from("products").insert(data);
+ }
 
-  try{
-    let result;
+ el("saveBtn").disabled=false;
 
-    if(id){
-      result = await db.from('products').update(product).eq('id',id);
-    }else{
-      result = await db.from('products').insert([product]);
-    }
+ if(result.error){
+  el("message").textContent="Save failed: "+result.error.message;
+  return;
+ }
 
-    if(result.error) throw result.error;
+ el("message").textContent="Product saved successfully!";
+ clearForm();
+ await loadProducts();
+}
 
-    message('productMessage','Product saved successfully.','ok');
-    resetForm();
-    await loadProducts();
+async function loadProducts(){
+ if(!currentUser)return;
 
-  }catch(error){
-    message('productMessage','Save failed: ' + error.message,'error');
-  }finally{
-    $('saveButton').disabled = false;
-    $('saveButton').textContent = 'Save Product';
-  }
+ el("productList").innerHTML="Loading products...";
+
+ const {data,error}=await db
+  .from("products")
+  .select("*")
+  .order("id",{ascending:false});
+
+ if(error){
+  el("productList").textContent="Error: "+error.message;
+  return;
+ }
+
+ products=data||[];
+
+ el("total").textContent=products.length;
+ el("active").textContent=products.filter(p=>p.is_active!==false).length;
+ el("outstock").textContent=products.filter(p=>Number(p.stock)===0).length;
+
+ filterProducts();
+}
+
+function filterProducts(){
+ const q=el("search").value.toLowerCase();
+ const cat=el("filterCategory").value;
+
+ const filtered=products.filter(p=>
+  (!cat || p.category===cat) &&
+  ((p.name||"").toLowerCase().includes(q) ||
+   (p.brand||"").toLowerCase().includes(q))
+ );
+
+ el("productList").innerHTML=filtered.map(p=>`
+ <div class="product">
+  <img src="${escapeAttr(p.image || p.image_url || "")}"
+   onerror="this.style.display='none'" alt="Product">
+  <h4>${escapeHTML(p.name||"")}</h4>
+  <p>Brand: ${escapeHTML(p.brand||"-")}</p>
+  <b>₹${Number(p.price||0)}</b>
+  <p class="muted">MRP: ₹${Number(p.mrp||0)}</p>
+  <p>Stock: ${Number(p.stock||0)}</p>
+  <p class="status">${p.is_active===false?"INACTIVE":"ACTIVE"}</p>
+  <div class="actions">
+   <button class="yellow" onclick="editProduct('${escapeAttr(p.id)}')">Edit</button>
+   <button class="gray" onclick="toggleProduct('${escapeAttr(p.id)}')">
+   ${p.is_active===false?"Activate":"Hide"}</button>
+   <button class="red" onclick="deleteProduct('${escapeAttr(p.id)}')">Delete</button>
+  </div>
+ </div>
+ `).join("") || "<p>No products found.</p>";
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+function escapeAttr(value){
+ return escapeHTML(value);
+}
+
+function editProduct(id){
+ const p=products.find(x=>String(x.id)===String(id));
+ if(!p)return;
+
+ el("editId").value=p.id;
+ el("name").value=p.name||"";
+ el("category").value=p.category||"CLOTHING";
+ el("brand").value=p.brand||"";
+ el("price").value=p.price||"";
+ el("mrp").value=p.mrp||"";
+ el("stock").value=p.stock??0;
+ el("delivery").value=p.delivery||"7-10 DAYS";
+ el("returnPolicy").value=p.returnPolicy||"15 DAYS";
+ el("imageUrl").value=p.image||p.image_url||"";
+ el("description").value=p.description||"";
+ el("isActive").checked=p.is_active!==false;
+
+ previewImage();
+
+ el("formTitle").textContent="✏️ Edit Product";
+ el("saveBtn").textContent="Update Product";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function toggleProduct(id){
+ const p=products.find(x=>String(x.id)===String(id));
+ if(!p)return;
+
+ const {error}=await db.from("products")
+ .update({is_active:p.is_active===false})
+ .eq("id",id);
+
+ if(error){alert(error.message);return}
+ await loadProducts();
 }
 
 async function deleteProduct(id){
-  const product = products.find(p=>String(p.id)===String(id));
+ if(!confirm("Are you sure you want to delete this product?"))return;
 
-  if(!product) return;
+ const {error}=await db.from("products").delete().eq("id",id);
 
-  if(!confirm('Delete ' + (product.name || 'this product') + '?')) return;
-
-  try{
-    const {error} = await db.from('products').delete().eq('id',id);
-    if(error) throw error;
-
-    await loadProducts();
-    message('productMessage','Product deleted successfully.','ok');
-
-  }catch(error){
-    message('productMessage','Delete failed: ' + error.message,'error');
-  }
+ if(error){alert("Delete failed: "+error.message);return}
+ await loadProducts();
 }
 
-async function loadOrders(){
-  $('orderList').textContent = 'Loading orders...';
-
-  try{
-    const {data,error} = await db
-      .from('orders')
-      .select('*')
-      .order('created_at',{ascending:false});
-
-    if(error) throw error;
-
-    const orders = data || [];
-
-    $('totalOrders').textContent = orders.length;
-
-    const total = orders.reduce((sum,order)=>{
-      return sum + Number(order.total_amount || 0);
-    },0);
-
-    $('totalSales').textContent = money(total);
-
-    const customers = new Set(
-      orders.map(order=>order.phone).filter(Boolean)
-    );
-
-    $('totalCustomers').textContent = customers.size;
-
-    renderOrders(orders);
-
-  }catch(error){
-    $('orderList').textContent =
-      'Orders could not be loaded: ' + error.message;
-  }
-}
-
-function renderOrders(orders){
-  const list = $('orderList');
-  list.replaceChildren();
-
-  if(!orders.length){
-    list.textContent = 'No orders received yet.';
-    return;
-  }
-
-  orders.forEach(order=>{
-    const card = document.createElement('div');
-    card.className = 'order';
-
-    const details = document.createElement('div');
-    details.className = 'details';
-
-    const title = document.createElement('strong');
-    title.textContent = order.customer_name || 'Customer';
-
-    const phone = document.createElement('div');
-    phone.textContent = 'Phone: ' + (order.phone || 'Not available');
-
-    const address = document.createElement('div');
-    address.textContent = 'Address: ' + (order.address || 'Not available');
-
-    const amount = document.createElement('div');
-    amount.textContent = 'Amount: ' + money(order.total_amount);
-
-    const date = document.createElement('div');
-    date.className = 'muted';
-    date.textContent = order.created_at
-      ? new Date(order.created_at).toLocaleString()
-      : '';
-
-    const status = document.createElement('div');
-    status.className = 'muted';
-    status.textContent = 'Status: ' + (order.status || 'Not recorded');
-
-    details.append(title,phone,address,amount,date,status);
-
-    const items = document.createElement('pre');
-    items.style.whiteSpace = 'pre-wrap';
-    items.style.overflowWrap = 'anywhere';
-    items.textContent = typeof order.items === 'string'
-      ? order.items
-      : JSON.stringify(order.items || [],null,2);
-
-    card.append(details,items);
-    list.appendChild(card);
-  });
-}
-
-document.getElementById('loginButton').addEventListener('click',login);
-document.getElementById('logoutButton').addEventListener('click',logout);
-document.getElementById('saveButton').addEventListener('click',saveProduct);
-document.getElementById('clearButton').addEventListener('click',resetForm);
-document.getElementById('refreshProducts').addEventListener('click',loadProducts);
-document.getElementById('refreshOrders').addEventListener('click',loadOrders);
-
-document.querySelectorAll('[data-tab]').forEach(button=>{
-  button.addEventListener('click',()=>{
-    document.querySelectorAll('[data-tab]').forEach(item=>item.classList.remove('active'));
-    button.classList.add('active');
-
-    $('productsTab').classList.toggle('hidden',button.dataset.tab!=='productsTab');
-    $('ordersTab').classList.toggle('hidden',button.dataset.tab!=='ordersTab');
-  });
-});
+checkSession();
 </script>
-
 </body>
 </html>
