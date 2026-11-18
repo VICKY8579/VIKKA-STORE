@@ -3,37 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIKKA Admin Dashboard</title>
+<title>VIKKA - Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f3f5f9;font-family:Arial,sans-serif;color:#202b3c}
-header{background:#101c35;color:white;padding:20px}
+body{margin:0;background:#f3f5f9;color:#202b3c;font-family:Arial,sans-serif}
+header{background:#101c35;color:white;padding:17px}
 header h2{margin:0}
-header p{color:#c5d1e5;margin:6px 0 0}
-main{max-width:1150px;margin:auto;padding:16px}
-.card{background:white;padding:19px;border-radius:13px;margin-bottom:17px;box-shadow:0 3px 14px #0000000b}
+header p{margin:6px 0 0;color:#c5d1e5}
+main{max-width:1250px;margin:auto;padding:15px}
+.card{background:white;padding:17px;border-radius:12px;margin-bottom:15px;box-shadow:0 3px 14px #0000000b}
 h3{margin-top:0}
-input,select,textarea{width:100%;padding:12px;margin:6px 0 13px;border:1px solid #d8deea;border-radius:8px;font-size:15px}
-textarea{min-height:85px}
-label{font-weight:600;font-size:14px}
-button{border:0;border-radius:8px;padding:11px 16px;background:#174b9b;color:white;font-weight:bold;cursor:pointer}
+input,select,textarea{width:100%;padding:11px;margin:6px 0 12px;border:1px solid #d8deea;border-radius:7px;font-size:15px}
+textarea{min-height:80px}
+label{font-weight:bold;font-size:14px}
+button{border:0;border-radius:7px;padding:10px 14px;background:#174b9b;color:white;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5}
 .green{background:#13844e}
 .red{background:#c63d3d}
 .yellow{background:#e9a923;color:#222}
 .gray{background:#667085}
 .hidden{display:none!important}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.stat{background:#edf3ff;padding:17px;border-radius:10px}
-.stat b{font-size:25px;display:block;margin-top:8px}
-.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.product{border:1px solid #e5e9f0;padding:12px;border-radius:10px;min-width:0}
-.product img{width:100%;height:160px;object-fit:contain;background:#f5f5f5;border-radius:8px}
-.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-.actions button{padding:8px 11px}
-#preview{max-width:160px;max-height:150px;object-fit:contain;display:none;margin:8px 0}
+.nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}
+.nav button{background:#e7edf7;color:#18365e}
+.nav button.selected{background:#174b9b;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.stat{background:#edf3ff;padding:16px;border-radius:10px}
+.stat b{font-size:25px;display:block;margin-top:7px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.product{border:1px solid #e5e9f0;padding:12px;border-radius:9px;min-width:0}
+.product img{width:100%;height:145px;object-fit:contain;background:#f5f5f5;border-radius:7px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.actions button{padding:8px 10px}
 .muted{color:#777;font-size:13px}
+#preview{max-width:150px;max-height:130px;object-fit:contain;display:none}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{border:1px solid #e2e6ed;padding:9px;text-align:left;white-space:nowrap}
+th{background:#edf3ff}
 @media(max-width:650px){.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -41,7 +48,7 @@ button:disabled{opacity:.5}
 
 <header>
 <h2>🛍️ VIKKA ADMIN</h2>
-<p>Store Management Dashboard</p>
+<p>Store Management System</p>
 </header>
 
 <main>
@@ -51,25 +58,47 @@ button:disabled{opacity:.5}
 <input id="email" type="email" placeholder="Admin Email">
 <label>Password</label>
 <input id="password" type="password" placeholder="Password">
-<button onclick="login()" id="loginBtn">Login</button>
+<button id="loginBtn" onclick="login()">Login</button>
 <p id="loginMsg" class="muted"></p>
 </section>
 
 <div id="dashboard" class="hidden">
 
 <section class="card">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-<h3>Welcome to VIKKA</h3>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+<h3>Welcome to VIKKA Store</h3>
 <button class="red" onclick="logout()">Logout</button>
 </div>
 <div class="grid">
 <div class="stat">Total Products<b id="total">0</b></div>
 <div class="stat">Active Products<b id="active">0</b></div>
 <div class="stat">Out of Stock<b id="outstock">0</b></div>
+<div class="stat">Orders<b id="orderCount">0</b></div>
+<div class="stat">Customers<b id="customerCount">0</b></div>
 </div>
 </section>
 
-<section class="card">
+<nav class="nav">
+<button class="selected" onclick="showTab('home',this)">Dashboard</button>
+<button onclick="showTab('products',this)">Products</button>
+<button onclick="showTab('categories',this)">Categories</button>
+<button onclick="showTab('orders',this)">Orders</button>
+<button onclick="showTab('order_items',this)">Order Items</button>
+<button onclick="showTab('customers',this)">Customers</button>
+<button onclick="showTab('addresses',this)">Addresses</button>
+</nav>
+
+<section id="home" class="tab card">
+<h3>VIKKA Store Overview</h3>
+<p>आपके मौजूदा Supabase Database से डेटा लोड किया जा रहा है।</p>
+<p class="muted">Products, Orders, Customers और बाकी उपलब्ध Tables को ऊपर से खोलें।</p>
+<button class="yellow" onclick="refreshAll()">Refresh Dashboard</button>
+<p id="homeMsg" class="muted"></p>
+</section>
+
+<section id="products" class="tab hidden">
+
+<div class="card">
 <h3 id="formTitle">➕ Add New Product</h3>
 <input type="hidden" id="editId">
 
@@ -79,7 +108,7 @@ button:disabled{opacity:.5}
 <input id="name" placeholder="Product Name">
 </div>
 <div>
-<label>Category *</label>
+<label>Category</label>
 <select id="category">
 <option value="CLOTHING">Clothing</option>
 <option value="GROCERY">Grocery</option>
@@ -98,82 +127,95 @@ button:disabled{opacity:.5}
 
 <div class="row">
 <div>
-<label>Selling Price (₹) *</label>
+<label>Selling Price *</label>
 <input id="price" type="number" min="0" placeholder="Selling Price">
 </div>
 <div>
-<label>MRP (₹)</label>
+<label>MRP</label>
 <input id="mrp" type="number" min="0" placeholder="MRP">
 </div>
 <div>
-<label>Stock Quantity</label>
+<label>Stock</label>
 <input id="stock" type="number" min="0" value="10">
 </div>
 </div>
 
-<div class="row">
-<div>
-<label>Delivery Information</label>
-<input id="delivery" value="7-10 DAYS">
-</div>
-<div>
-<label>Return Policy</label>
-<input id="returnPolicy" value="15 DAYS">
-</div>
-</div>
+<label>Product Image URL *</label>
+<input id="imageUrl" placeholder="https://example.com/image.jpg" oninput="previewImage()">
+<img id="preview" alt="Image Preview">
 
-<label>Main Product Image URL *</label>
-<input id="imageUrl" placeholder="https://example.com/product.jpg" oninput="previewImage()">
-<img id="preview" alt="Product Preview">
+<label>Description</label>
+<textarea id="description" placeholder="Product details"></textarea>
 
-<label>Product Description</label>
-<textarea id="description" placeholder="Write product details..."></textarea>
-
-<label style="display:block;margin:10px 0">
-<input type="checkbox" id="isActive" checked style="width:auto;margin:0">
-Show this product in the store
+<label style="display:block;margin:8px 0 15px">
+<input id="isActive" type="checkbox" checked style="width:auto;margin:0">
+Show product in store
 </label>
 
 <div class="actions">
-<button class="green" onclick="saveProduct()" id="saveBtn">Save Product</button>
+<button class="green" id="saveBtn" onclick="saveProduct()">Save Product</button>
 <button class="yellow" onclick="clearForm()">Clear Form</button>
 </div>
-<p id="message" class="muted"></p>
+<p id="productMsg" class="muted"></p>
+</div>
+
+<div class="card">
+<h3>📦 Manage Products</h3>
+<input id="search" placeholder="Search product..." oninput="filterProducts()">
+<button class="yellow" onclick="loadProducts()">Refresh Products</button>
+<div id="productList" class="grid" style="margin-top:14px"></div>
+</div>
 </section>
 
-<section class="card">
-<h3>📦 Manage Products</h3>
-<input id="search" placeholder="Search product by name or brand..." oninput="filterProducts()">
-<select id="filterCategory" onchange="filterProducts()">
-<option value="">All Categories</option>
-<option>CLOTHING</option>
-<option>GROCERY</option>
-<option>BEAUTY</option>
-<option>KIDS</option>
-<option>GENERAL</option>
-<option>ELECTRONICS</option>
-<option>HOME</option>
-</select>
-<button class="yellow" onclick="loadProducts()">Refresh Products</button>
-<div id="productList" class="grid" style="margin-top:15px"></div>
+<section id="categories" class="tab card hidden">
+<h3>Categories</h3>
+<button class="yellow" onclick="loadTable('categories')">Refresh Categories</button>
+<div id="categoriesData" class="tablewrap"></div>
+</section>
+
+<section id="orders" class="tab card hidden">
+<h3>Customer Orders</h3>
+<button class="yellow" onclick="loadTable('orders')">Refresh Orders</button>
+<div id="ordersData" class="tablewrap"></div>
+</section>
+
+<section id="order_items" class="tab card hidden">
+<h3>Order Items</h3>
+<button class="yellow" onclick="loadTable('order_items')">Refresh Order Items</button>
+<div id="order_itemsData" class="tablewrap"></div>
+</section>
+
+<section id="customers" class="tab card hidden">
+<h3>Customers</h3>
+<button class="yellow" onclick="loadTable('customers')">Refresh Customers</button>
+<div id="customersData" class="tablewrap"></div>
+</section>
+
+<section id="addresses" class="tab card hidden">
+<h3>Customer Addresses</h3>
+<button class="yellow" onclick="loadTable('addresses')">Refresh Addresses</button>
+<div id="addressesData" class="tablewrap"></div>
 </section>
 
 </div>
 </main>
 
 <script>
-// VIKKA SUPABASE PROJECT
-const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
+const SUPABASE_URL =
+"https://izjlpgpvrmvhcefxulhj.supabase.co";
 
-// Key from the earlier version you provided.
-// Confirm this is the active Publishable key in Supabase.
-const SUPABASE_KEY = "sb_publishable_8amspsA0ewjZXZomX8Nw_5YE14um-";
+const SUPABASE_KEY =
+"sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
 
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
 
-let products = [];
-let currentUser = null;
 const el = id => document.getElementById(id);
+
+let currentUser = null;
+let products = [];
 
 
 // LOGIN
@@ -190,7 +232,10 @@ async function login(){
  el("loginMsg").textContent = "Checking login...";
 
  try{
-  const {data,error} = await db.auth.signInWithPassword({email,password});
+  const {data,error} = await db.auth.signInWithPassword({
+   email,password
+  });
+
   if(error) throw error;
 
   currentUser = data.user;
@@ -204,7 +249,8 @@ async function login(){
   if(adminError || !admin){
    await db.auth.signOut();
    currentUser = null;
-   throw new Error("Admin authorization failed: "+(adminError?.message || "Not an admin"));
+   throw new Error("Admin authorization failed: "+
+    (adminError?.message || "Not an admin"));
   }
 
   el("loginMsg").textContent = "";
@@ -235,27 +281,24 @@ async function checkSession(){
 
    if(admin && !adminError){
     showDashboard();
-    return;
+   }else{
+    await db.auth.signOut();
+    currentUser = null;
    }
-
-   await db.auth.signOut();
-   currentUser = null;
   }
  }catch(error){
-  console.error("Session error:",error.message);
+  console.error(error);
  }
 }
 
 
-// DASHBOARD
 function showDashboard(){
  el("loginBox").classList.add("hidden");
  el("dashboard").classList.remove("hidden");
- loadProducts();
+ refreshAll();
 }
 
 
-// LOGOUT
 async function logout(){
  await db.auth.signOut();
  currentUser = null;
@@ -264,6 +307,41 @@ async function logout(){
  el("loginBox").classList.remove("hidden");
  el("password").value = "";
  el("loginMsg").textContent = "";
+}
+
+
+// NAVIGATION
+function showTab(id,button){
+ document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));
+ el(id).classList.remove("hidden");
+
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("selected"));
+ button.classList.add("selected");
+
+ if(["categories","orders","order_items","customers","addresses"].includes(id)){
+  loadTable(id);
+ }
+}
+
+
+// DASHBOARD COUNTS
+async function refreshAll(){
+ await loadProducts();
+
+ const tables = ["orders","customers"];
+
+ for(const table of tables){
+  const {count,error} = await db
+   .from(table)
+   .select("*",{count:"exact",head:true});
+
+  if(!error){
+   if(table==="orders") el("orderCount").textContent = count || 0;
+   if(table==="customers") el("customerCount").textContent = count || 0;
+  }
+ }
+
+ el("homeMsg").textContent = "Dashboard refreshed.";
 }
 
 
@@ -280,32 +358,31 @@ function previewImage(){
 
  img.src = url;
  img.style.display = "block";
- img.onerror = () => img.style.display = "none";
+ img.onerror = ()=>img.style.display = "none";
 }
 
 
-// CLEAR FORM
+// CLEAR PRODUCT FORM
 function clearForm(){
  el("editId").value = "";
 
  ["name","brand","price","mrp","imageUrl","description"]
- .forEach(id => el(id).value = "");
+ .forEach(id=>el(id).value="");
 
  el("category").value = "CLOTHING";
- el("stock").value = "10";
- el("delivery").value = "7-10 DAYS";
- el("returnPolicy").value = "15 DAYS";
+ el("stock").value = 10;
  el("isActive").checked = true;
 
  el("preview").style.display = "none";
  el("preview").removeAttribute("src");
+
  el("formTitle").textContent = "➕ Add New Product";
  el("saveBtn").textContent = "Save Product";
- el("message").textContent = "";
+ el("productMsg").textContent = "";
 }
 
 
-// SAVE / UPDATE PRODUCT
+// SAVE PRODUCT
 async function saveProduct(){
  if(!currentUser){
   alert("Please login first");
@@ -315,24 +392,22 @@ async function saveProduct(){
  const name = el("name").value.trim();
  const priceText = el("price").value;
  const price = Number(priceText);
- const imageUrl = el("imageUrl").value.trim();
  const mrp = Number(el("mrp").value) || 0;
  const stock = Number(el("stock").value);
+ const image = el("imageUrl").value.trim();
 
- if(!name || priceText === "" || !imageUrl){
-  alert("Product Name, Selling Price and Image URL are required.");
+ if(!name || priceText==="" || !image){
+  alert("Product Name, Price and Image URL required");
   return;
  }
 
- if(!Number.isFinite(price) || price <= 0 ||
-    !Number.isFinite(mrp) || mrp < 0 ||
-    !Number.isFinite(stock) || stock < 0){
-  alert("Enter valid positive values.");
+ if(!Number.isFinite(price) || price<=0 ||
+    !Number.isFinite(mrp) || mrp<0 ||
+    !Number.isFinite(stock) || stock<0){
+  alert("Please enter valid price and stock");
   return;
  }
 
- // image is the required database column
- // image_url intentionally not included
  const productData = {
   name:name,
   category:el("category").value,
@@ -340,34 +415,34 @@ async function saveProduct(){
   price:price,
   mrp:mrp,
   stock:stock,
-  delivery:el("delivery").value.trim(),
-  returnPolicy:el("returnPolicy").value.trim(),
   description:el("description").value.trim(),
-  image:imageUrl,
+  image:image,
   is_active:el("isActive").checked
  };
 
  const id = el("editId").value;
  el("saveBtn").disabled = true;
- el("message").textContent = "Saving product...";
+ el("productMsg").textContent = "Saving...";
 
  try{
   let result;
 
   if(id){
-   result = await db.from("products").update(productData).eq("id",id);
+   result = await db.from("products")
+    .update(productData).eq("id",id);
   }else{
-   result = await db.from("products").insert(productData);
+   result = await db.from("products")
+    .insert(productData);
   }
 
   if(result.error) throw result.error;
 
-  el("message").textContent = "Product saved successfully!";
   clearForm();
+  el("productMsg").textContent = "Product saved successfully.";
   await loadProducts();
 
  }catch(error){
-  el("message").textContent = "Save failed: "+error.message;
+  el("productMsg").textContent = "Save failed: "+error.message;
  }finally{
   el("saveBtn").disabled = false;
  }
@@ -378,7 +453,7 @@ async function saveProduct(){
 async function loadProducts(){
  if(!currentUser) return;
 
- el("productList").innerHTML = "Loading products...";
+ el("productList").textContent = "Loading products...";
 
  try{
   const {data,error} = await db
@@ -391,8 +466,10 @@ async function loadProducts(){
   products = data || [];
 
   el("total").textContent = products.length;
-  el("active").textContent = products.filter(p=>p.is_active!==false).length;
-  el("outstock").textContent = products.filter(p=>Number(p.stock)===0).length;
+  el("active").textContent =
+   products.filter(p=>p.is_active!==false).length;
+  el("outstock").textContent =
+   products.filter(p=>Number(p.stock)===0).length;
 
   filterProducts();
 
@@ -402,42 +479,39 @@ async function loadProducts(){
 }
 
 
-// HTML ESCAPE
+// ESCAPE HTML
 function escapeHTML(value){
  return String(value).replace(/[&<>"']/g,c=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
  })[c]);
 }
 
 
-// FILTER
+// PRODUCT SEARCH
 function filterProducts(){
  const q = el("search").value.toLowerCase();
- const cat = el("filterCategory").value;
 
- const filtered = products.filter(p =>
-  (!cat || p.category===cat) &&
-  ((p.name||"").toLowerCase().includes(q) ||
-   (p.brand||"").toLowerCase().includes(q))
+ const filtered = products.filter(p=>
+  (p.name||"").toLowerCase().includes(q) ||
+  (p.brand||"").toLowerCase().includes(q)
  );
 
  el("productList").innerHTML = filtered.map(p=>`
   <div class="product">
-   <img src="${escapeHTML(p.image || p.image_url || "")}"
+   <img src="${escapeHTML(p.image||p.image_url||"")}"
     onerror="this.style.display='none'" alt="Product">
    <h4>${escapeHTML(p.name||"")}</h4>
    <p>Brand: ${escapeHTML(p.brand||"-")}</p>
    <b>₹${Number(p.price||0)}</b>
-   <p class="muted">MRP: ₹${Number(p.mrp||0)}</p>
+   <p>MRP: ₹${Number(p.mrp||0)}</p>
    <p>Stock: ${Number(p.stock||0)}</p>
    <p>${p.is_active===false?"INACTIVE":"ACTIVE"}</p>
    <div class="actions">
     <button class="yellow" onclick="editProduct('${escapeHTML(p.id)}')">Edit</button>
-    <button class="gray" onclick="toggleProduct('${escapeHTML(p.id)}')">${p.is_active===false?"Activate":"Hide"}</button>
+    <button class="gray" onclick="toggleProduct('${escapeHTML(p.id)}')">
+     ${p.is_active===false?"Activate":"Hide"}
+    </button>
     <button class="red" onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
    </div>
   </div>
@@ -445,27 +519,27 @@ function filterProducts(){
 }
 
 
-// EDIT
+// EDIT PRODUCT
 function editProduct(id){
  const p = products.find(x=>String(x.id)===String(id));
  if(!p) return;
 
  el("editId").value = p.id;
- el("name").value = p.name || "";
- el("category").value = p.category || "CLOTHING";
- el("brand").value = p.brand || "";
- el("price").value = p.price ?? "";
- el("mrp").value = p.mrp ?? "";
- el("stock").value = p.stock ?? 0;
- el("delivery").value = p.delivery || "7-10 DAYS";
- el("returnPolicy").value = p.returnPolicy || "15 DAYS";
- el("imageUrl").value = p.image || p.image_url || "";
- el("description").value = p.description || "";
- el("isActive").checked = p.is_active !== false;
+ el("name").value = p.name||"";
+ el("category").value = p.category||"CLOTHING";
+ el("brand").value = p.brand||"";
+ el("price").value = p.price??"";
+ el("mrp").value = p.mrp??"";
+ el("stock").value = p.stock??0;
+ el("imageUrl").value = p.image||p.image_url||"";
+ el("description").value = p.description||"";
+ el("isActive").checked = p.is_active!==false;
 
  previewImage();
  el("formTitle").textContent = "✏️ Edit Product";
  el("saveBtn").textContent = "Update Product";
+
+ showTab("products",document.querySelectorAll(".nav button")[1]);
  window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -480,7 +554,7 @@ async function toggleProduct(id){
   .eq("id",id);
 
  if(error){
-  alert("Update failed: "+error.message);
+  alert(error.message);
   return;
  }
 
@@ -490,9 +564,10 @@ async function toggleProduct(id){
 
 // DELETE
 async function deleteProduct(id){
- if(!confirm("Are you sure you want to delete this product?")) return;
+ if(!confirm("Delete this product permanently?")) return;
 
- const {error} = await db.from("products").delete().eq("id",id);
+ const {error} = await db.from("products")
+  .delete().eq("id",id);
 
  if(error){
   alert("Delete failed: "+error.message);
@@ -500,6 +575,52 @@ async function deleteProduct(id){
  }
 
  await loadProducts();
+}
+
+
+// GENERIC TABLE VIEW
+async function loadTable(table){
+ if(!currentUser) return;
+
+ const output = el(table+"Data");
+ output.innerHTML = "Loading...";
+
+ try{
+  const {data,error} = await db
+   .from(table)
+   .select("*")
+   .limit(100);
+
+  if(error) throw error;
+
+  if(!data || data.length===0){
+   output.innerHTML = "<p>No records found.</p>";
+   return;
+  }
+
+  const columns = Object.keys(data[0]);
+
+  let html = "<table><thead><tr>";
+  columns.forEach(c=>html+="<th>"+escapeHTML(c)+"</th>");
+  html += "</tr></thead><tbody>";
+
+  data.forEach(row=>{
+   html += "<tr>";
+   columns.forEach(c=>{
+    let value = row[c];
+    if(value===null || value===undefined) value="";
+    if(typeof value==="object") value=JSON.stringify(value);
+    html += "<td>"+escapeHTML(value)+"</td>";
+   });
+   html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  output.innerHTML = html;
+
+ }catch(error){
+  output.textContent = "Could not load "+table+": "+error.message;
+ }
 }
 
 
