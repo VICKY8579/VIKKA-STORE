@@ -1,176 +1,204 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIKKA Store - Seller Registration</title>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background: #f3f5fa;
-  color: #182033;
-}
-
-.container {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 25px;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-}
-
-h1 {
-  text-align: center;
-  color: #185adb;
-}
-
-.subtitle {
-  text-align: center;
-  color: #666;
-}
-
-label {
-  display: block;
-  margin-top: 15px;
-  font-weight: bold;
-}
-
-input, textarea {
-  width: 100%;
-  padding: 12px;
-  margin-top: 6px;
-  border: 1px solid #ccc;
-  border-radius: 7px;
-  font-size: 15px;
-}
-
-textarea {
-  min-height: 80px;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 22px;
-  background: #185adb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.note {
-  background: #fff8e8;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 18px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-#message {
-  display: none;
-  margin-top: 15px;
-  padding: 12px;
-  background: #fff0f0;
-  color: #9b2424;
-  border-radius: 8px;
-}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#f3f5fa;font-family:Arial,sans-serif;color:#182033}
+.container{max-width:600px;margin:20px auto;background:white;padding:25px;border-radius:15px;box-shadow:0 5px 20px #0001}
+h1{text-align:center;color:#185adb}
+.subtitle{text-align:center;color:#666}
+label{display:block;margin-top:15px;font-weight:bold}
+input,textarea{width:100%;padding:12px;margin-top:6px;border:1px solid #ccc;border-radius:7px;font-size:15px}
+textarea{min-height:75px}
+button{width:100%;padding:14px;margin-top:20px;background:#185adb;color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+.payment{background:#fff8e8;padding:15px;border-radius:9px;margin-top:20px;line-height:1.7}
+.section{border-top:1px solid #ddd;margin-top:25px;padding-top:15px}
+#message{display:none;margin-top:15px;padding:12px;background:#eef5ff;border-radius:8px;line-height:1.5}
+.small{font-size:13px;color:#666}
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
 <h1>VIKKA STORE</h1>
-<p class="subtitle">Seller Registration Form</p>
+<p class="subtitle">Seller Registration</p>
 
-<form id="sellerForm">
+<div class="section">
+<h3>Step 1: Create Seller Account</h3>
+<label>Full Name *</label>
+<input id="fullName" required>
 
-<label>Seller का पूरा नाम *</label>
-<input type="text" name="fullName" required>
+<label>Business / Shop Name *</label>
+<input id="shopName" required>
 
-<label>दुकान / Business का नाम *</label>
-<input type="text" name="shopName" required>
-
-<label>मोबाइल नंबर *</label>
-<input type="tel" name="mobile"
-pattern="[6-9][0-9]{9}"
-maxlength="10"
-placeholder="10 अंकों का मोबाइल नंबर"
-required>
+<label>Mobile Number *</label>
+<input id="mobile" type="tel" maxlength="10" pattern="[6-9][0-9]{9}" required>
 
 <label>Email Address *</label>
-<input type="email" name="email" required>
+<input id="email" type="email" required>
 
 <label>Password *</label>
-<input type="password" name="password"
-minlength="8" required>
+<input id="password" type="password" minlength="8" required>
 
-<label>दुकान का पूरा पता *</label>
-<textarea name="address" required></textarea>
-
-<label>Aadhaar के आखिरी 4 अंक *</label>
-<input type="text" name="aadhaarLast4"
-inputmode="numeric"
-pattern="[0-9]{4}"
-maxlength="4"
-placeholder="आखिरी 4 अंक"
-required>
-
-<label>PAN Card Number *</label>
-<input type="text" id="pan"
-name="pan"
-maxlength="10"
-pattern="[A-Z]{5}[0-9]{4}[A-Z]"
-placeholder="ABCDE1234F"
-required>
-
-<div class="note">
-<strong>Document Verification:</strong><br>
-Seller को अपना Original Aadhaar और PAN Card Admin को physically दिखाना होगा।
-Admin जाँच के बाद Seller को Approve या Reject करेगा।
-Approval के बाद ही Seller सामान Upload कर सकेगा।
+<button onclick="createAccount()">Create Account</button>
 </div>
 
-<button type="submit">
-Registration Submit
-</button>
+<div class="section">
+<h3>Step 2: Login After Email Verification</h3>
+<label>Email Address</label>
+<input id="loginEmail" type="email">
+
+<label>Password</label>
+<input id="loginPassword" type="password">
+
+<button onclick="loginSeller()">Login</button>
+</div>
+
+<div class="section">
+<h3>Step 3: Seller Details and Registration Payment</h3>
+<p class="small">Login first to submit your seller details and payment UTR.</p>
+
+<label>Business Address *</label>
+<textarea id="address"></textarea>
+
+<label>Last 4 Digits of Aadhaar *</label>
+<input id="aadhaar" maxlength="4" inputmode="numeric">
+
+<label>Last 4 Characters of PAN *</label>
+<input id="pan" maxlength="4">
+
+<div class="payment">
+<strong>Registration Fee: ₹20 (One Time Only)</strong><br>
+UPI ID: <strong>beingbimalvicky@ybl</strong><br>
+Pay ₹20 using any UPI app. Enter your UTR number below after payment.
+</div>
+
+<label>Payment UTR Number *</label>
+<input id="utr" placeholder="Enter UTR / Transaction Reference" required>
+
+<button onclick="submitRegistration()">Submit Registration & Payment Details</button>
+</div>
 
 <div id="message"></div>
-
-</form>
-
 </div>
 
 <script>
-const form = document.getElementById("sellerForm");
-const pan = document.getElementById("pan");
-const message = document.getElementById("message");
+const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
+const SUPABASE_KEY = "sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-pan.addEventListener("input", function() {
-  this.value = this.value.toUpperCase();
-});
+const msg = document.getElementById("message");
+let currentUser = null;
 
-form.addEventListener("submit", function(event) {
-  event.preventDefault();
+function showMessage(text) {
+  msg.style.display = "block";
+  msg.innerText = text;
+}
 
-  message.style.display = "block";
-  message.innerText =
-  "यह Registration Form अभी Supabase Database से जुड़ा नहीं है। कोई जानकारी सेव नहीं हुई है।";
-});
+async function createAccount() {
+  const fullName = document.getElementById("fullName").value.trim();
+  const shopName = document.getElementById("shopName").value.trim();
+  const mobile = document.getElementById("mobile").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!fullName || !shopName || !mobile || !email || password.length < 8) {
+    showMessage("Please complete all account fields. Password must be at least 8 characters.");
+    return;
+  }
+
+  const { data, error } = await db.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage(error.message);
+    return;
+  }
+
+  showMessage(
+    "Account created. Please verify your email, then use Step 2 to login. After login, complete Step 3."
+  );
+}
+
+async function loginSeller() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  const { data, error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage(error.message);
+    return;
+  }
+
+  currentUser = data.user;
+  showMessage("Login successful. Complete Step 3 to submit your seller registration.");
+}
+
+async function submitRegistration() {
+  if (!currentUser) {
+    showMessage("Please login first using Step 2.");
+    return;
+  }
+
+  const address = document.getElementById("address").value.trim();
+  const aadhaar = document.getElementById("aadhaar").value.trim();
+  const pan = document.getElementById("pan").value.trim().toUpperCase();
+  const utr = document.getElementById("utr").value.trim();
+
+  const fullName = document.getElementById("fullName").value.trim();
+  const shopName = document.getElementById("shopName").value.trim();
+  const mobile = document.getElementById("mobile").value.trim();
+
+  if (!address || !/^[0-9]{4}$/.test(aadhaar) || !pan || !utr) {
+    showMessage("Please complete all seller details and enter a valid UTR number.");
+    return;
+  }
+
+  const { error: profileError } = await db
+    .from("seller_profiles")
+    .upsert({
+      id: currentUser.id,
+      full_name: fullName,
+      phone: mobile,
+      shop_name: shopName,
+      business_address: address,
+      aadhaar_last4: aadhaar,
+      pan_last4: pan.slice(-4),
+      status: "pending"
+    });
+
+  if (profileError) {
+    showMessage("Seller profile error: " + profileError.message);
+    return;
+  }
+
+  const { error: paymentError } = await db
+    .from("seller_upload_payments")
+    .insert({
+      seller_id: currentUser.id,
+      amount: 20,
+      upi_id: "beingbimalvicky@ybl",
+      utr_number: utr,
+      payment_type: "registration",
+      status: "pending"
+    });
+
+  if (paymentError) {
+    showMessage("Payment submission error: " + paymentError.message);
+    return;
+  }
+
+  showMessage("Registration submitted. ₹20 payment is pending Admin verification. Your seller account will be reviewed.");
+}
 </script>
-
 </body>
 </html>
