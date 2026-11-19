@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA STORE | Your Online Shopping Partner</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#17213b}
+header{background:#111c42;color:white;padding:17px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo{font-size:27px;font-weight:900;letter-spacing:.5px}
+.logo span{color:#ffad16}
+nav a{color:white;text-decoration:none;margin-left:18px;font-weight:bold}
+.btn{background:#ffad16;color:#142044;padding:11px 19px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}
+.search{display:block;width:90%;max-width:800px;margin:22px auto;padding:14px;border:1px solid #ddd;border-radius:9px;font-size:16px}
+.hero{margin:20px auto;width:92%;max-width:1250px;min-height:260px;padding:45px;background:linear-gradient(120deg,#14234e,#087bd2);border-radius:18px;color:white;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.hero h1{font-size:35px;margin:0 0 14px}
+.hero p{font-size:17px;line-height:1.6}
+.hero-mark{font-size:80px;opacity:.9}
+section{width:92%;max-width:1250px;margin:30px auto}
+h2{color:#17213b}
+.categories{display:flex;gap:10px;flex-wrap:wrap}
+.category{padding:10px 18px;border:1px solid #cbd3e2;border-radius:30px;background:white;cursor:pointer}
+.category.active{background:#17264f;color:white}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.card{background:white;border-radius:13px;padding:14px;box-shadow:0 3px 15px #17213b12}
+.card img{width:100%;height:175px;object-fit:contain;background:#f5f6f9;border-radius:8px}
+.card h3{margin:12px 0 5px}
+.price{font-size:20px;color:#087a55;font-weight:bold}
+.old{color:#888;text-decoration:line-through;font-size:13px}
+.card button{margin-top:10px}
+.status{text-align:center;padding:25px;color:#69748b}
+footer{background:#111c42;color:white;text-align:center;padding:25px;margin-top:50px}
+@media(max-width:600px){
+.hero{padding:28px 22px;min-height:220px}
+.hero h1{font-size:27px}
+.hero-mark{display:none}
+.logo{font-size:23px}
+nav a{margin-left:8px;font-size:13px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">VIKKA <span>STORE</span></div>
+  <nav>
+    <a href="index.html">Old Store</a>
+    <a href="admin.html">Admin</a>
+    <a href="seller.html">Seller</a>
+    <a href="index.html" class="btn">Shop Now</a>
+  </nav>
+</header>
+
+<input id="search" class="search"
+placeholder="Search products, brands or categories...">
+
+<div class="hero">
+  <div>
+    <h1>Welcome to VIKKA Store</h1>
+    <p>Your Online Shopping Partner<br>
+    Discover useful products at great prices.<br>
+    Easy Shopping • Great Deals • Trusted Service</p>
+    <a href="#products" class="btn">SHOP NOW →</a>
+  </div>
+  <div class="hero-mark">🛍️</div>
+</div>
+
+<section>
+  <h2>Shop by Category</h2>
+  <div class="categories" id="categories">
+    <button class="category active" data-category="all">All Products</button>
+  </div>
+</section>
+
+<section id="products">
+  <h2>All Products</h2>
+  <p>Explore products available at VIKKA Store.</p>
+  <div id="productList" class="products">
+    <div class="status">Loading products...</div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">VIKKA <span>STORE</span></div>
+  <p>Your Online Shopping Partner</p>
+  <p>© <span id="year"></span> VIKKA Store. All rights reserved.</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let allProducts = [];
+let selectedCategory = 'all';
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+async function loadProducts(){
+  const box = document.getElementById('productList');
+  box.innerHTML = '<div class="status">Loading products...</div>';
+
+  const {data,error} = await db.from('products').select('*');
+
+  if(error){
+    box.innerHTML = '<div class="status">Products load nahi hue. Please try again.</div>';
+    console.error(error);
+    return;
+  }
+
+  allProducts = (data || []).filter(p => p.is_active !== false);
+  createCategories();
+  showProducts();
+}
+
+function createCategories(){
+  const cats = [...new Set(allProducts.map(p=>p.category).filter(Boolean))];
+  const box = document.getElementById('categories');
+  box.innerHTML = '<button class="category active" data-category="all">All Products</button>';
+
+  cats.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'category';
+    btn.textContent = cat;
+    btn.dataset.category = cat;
+    btn.onclick = ()=>selectCategory(cat);
+    box.appendChild(btn);
+  });
+
+  box.querySelector('[data-category="all"]').onclick = ()=>selectCategory('all');
+}
+
+function selectCategory(cat){
+  selectedCategory = cat;
+  document.querySelectorAll('.category').forEach(b=>{
+    b.classList.toggle('active',b.dataset.category===cat);
+  });
+  showProducts();
+}
+
+function showProducts(){
+  const term = document.getElementById('search').value.toLowerCase();
+  const box = document.getElementById('productList');
+
+  const filtered = allProducts.filter(p=>{
+    const matchCategory = selectedCategory==='all' || p.category===selectedCategory;
+    const matchSearch = [p.name,p.brand,p.category].join(' ').toLowerCase().includes(term);
+    return matchCategory && matchSearch;
+  });
+
+  if(!filtered.length){
+    box.innerHTML='<div class="status">No products found.</div>';
+    return;
+  }
+
+  box.innerHTML = '';
+
+  filtered.forEach(p=>{
+    const card = document.createElement('div');
+    card.className='card';
+
+    const img=document.createElement('img');
+    img.src=p.image_url || p.image || '';
+    img.alt=p.name || 'Product';
+    img.onerror=()=>{img.style.display='none'};
+
+    const name=document.createElement('h3');
+    name.textContent=p.name || 'Product';
+
+    const brand=document.createElement('p');
+    brand.textContent=p.brand || '';
+
+    const price=document.createElement('div');
+    price.className='price';
+    price.textContent='₹'+Number(p.price || 0).toLocaleString('en-IN');
+
+    const old=document.createElement('span');
+    old.className='old';
+    old.textContent=p.mrp ? ' ₹'+Number(p.mrp).toLocaleString('en-IN') : '';
+
+    const btn=document.createElement('a');
+    btn.className='btn';
+    btn.href='index.html';
+    btn.textContent='View in Store';
+
+    card.append(img,name,brand,price,old,document.createElement('br'),btn);
+    box.appendChild(card);
+  });
+}
+
+document.getElementById('search').addEventListener('input',showProducts);
+
+loadProducts();
+</script>
+
+</body>
+</html>
