@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA STORE - Seller Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5fa;font-family:Arial,sans-serif;color:#182344}
+header{background:#111c42;color:white;padding:17px 5%;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:bold}
+.logo span{color:#ffad16}
+button{border:0;border-radius:7px;padding:11px 17px;background:#172c5b;color:white;cursor:pointer;font-weight:bold}
+button.orange{background:#ffad16;color:#17213b}
+button:disabled{opacity:.5;cursor:not-allowed}
+.container{max-width:1100px;margin:25px auto;padding:15px}
+.card{background:white;border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:0 3px 14px #0000000d}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd3df;border-radius:7px;font-size:15px}
+label{font-weight:bold;font-size:14px}
+h2{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px}
+.stat{background:#edf3ff;border-radius:10px;padding:18px}
+.stat strong{display:block;font-size:25px;color:#1262a5;margin-top:8px}
+.tabs{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+.tabs button{background:#e2e8f2;color:#17213b}
+.tabs button.active{background:#172c5b;color:white}
+.hidden{display:none!important}
+.notice{padding:12px;border-radius:8px;background:#fff5d9;margin:12px 0}
+.success{background:#e3f8eb}
+.error{background:#ffe5e5}
+table{width:100%;border-collapse:collapse}
+td,th{padding:12px;border-bottom:1px solid #eee;text-align:left}
+footer{text-align:center;color:#777;padding:20px}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">VIKKA <span>STORE</span></div>
+ <button class="orange" onclick="location.href='home.html'">Visit Store</button>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="authBox" class="card">
+ <h2>Seller Login / Registration</h2>
+ <p>VIKKA Store Seller Portal</p>
+
+ <div id="authMessage"></div>
+
+ <div id="loginForm">
+  <label>Email</label>
+  <input id="loginEmail" type="email" placeholder="Enter email">
+  <label>Password</label>
+  <input id="loginPassword" type="password" placeholder="Enter password">
+  <button onclick="login()">Login</button>
+  <button class="orange" onclick="showRegister()">New Seller? Register</button>
+ </div>
+
+ <div id="registerForm" class="hidden">
+  <label>Full Name</label>
+  <input id="regName" placeholder="Seller full name">
+  <label>Mobile Number</label>
+  <input id="regPhone" type="tel" placeholder="10 digit mobile number">
+  <label>Email</label>
+  <input id="regEmail" type="email" placeholder="Email address">
+  <label>Password</label>
+  <input id="regPassword" type="password" placeholder="Create password">
+  <button onclick="register()">Submit Registration</button>
+  <button class="orange" onclick="showLogin()">Back to Login</button>
+ </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+ <div class="card">
+  <h2>Welcome, <span id="sellerName">Seller</span></h2>
+  <p>Seller Status: <strong id="sellerStatus">Checking...</strong></p>
+  <div id="approvalMessage" class="notice"></div>
+  <button onclick="logout()">Logout</button>
+ </div>
+
+ <div id="sellerWorkspace" class="hidden">
+
+  <div class="grid">
+   <div class="stat">My Products<strong id="productCount">0</strong></div>
+   <div class="stat">My Orders<strong id="orderCount">0</strong></div>
+   <div class="stat">Total Sales<strong id="salesTotal">₹0</strong></div>
+   <div class="stat">Commission<strong id="commissionTotal">₹0</strong></div>
+  </div>
+
+  <div class="tabs">
+   <button class="active" onclick="showTab('upload',this)">Add Product</button>
+   <button onclick="showTab('myproducts',this)">My Products</button>
+   <button onclick="showTab('myorders',this)">My Orders</button>
+   <button onclick="showTab('earnings',this)">Earnings</button>
+  </div>
+
+  <div id="upload" class="card">
+   <h2>Upload New Product</h2>
+   <div id="productMessage"></div>
+
+   <label>Product Name</label>
+   <input id="pName" placeholder="Enter product name">
+
+   <label>Category</label>
+   <input id="pCategory" placeholder="Example: Clothing, Toys, Beauty">
+
+   <label>Brand</label>
+   <input id="pBrand" placeholder="Brand name">
+
+   <div class="grid">
+    <div>
+     <label>Selling Price (₹)</label>
+     <input id="pPrice" type="number" min="1" placeholder="999">
+    </div>
+    <div>
+     <label>MRP (₹)</label>
+     <input id="pMrp" type="number" min="1" placeholder="1299">
+    </div>
+    <div>
+     <label>Stock Quantity</label>
+     <input id="pStock" type="number" min="0" placeholder="10">
+    </div>
+   </div>
+
+   <label>Product Image URL</label>
+   <input id="pImage" type="url" placeholder="https://example.com/product.jpg">
+
+   <label>Description</label>
+   <textarea id="pDescription" rows="4" placeholder="Product details"></textarea>
+
+   <button class="orange" onclick="uploadProduct()">Submit Product</button>
+   <p><small>New products will require Admin approval before appearing in the Store.</small></p>
+  </div>
+
+  <div id="myproducts" class="card hidden">
+   <h2>My Products</h2>
+   <div id="productsList">Loading...</div>
+  </div>
+
+  <div id="myorders" class="card hidden">
+   <h2>My Orders</h2>
+   <div id="ordersList">Orders will appear here after database setup.</div>
+  </div>
+
+  <div id="earnings" class="card hidden">
+   <h2>My Earnings</h2>
+   <p>Sales and commission reports will appear here after order and commission database setup.</p>
+  </div>
+
+ </div>
+</div>
+
+</div>
+
+<footer>© VIKKA STORE - Your Online Shopping Partner</footer>
+
+<script>
+const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+let sellerData=null;
+
+function message(id,text,type='notice'){
+ const el=document.getElementById(id);
+ el.className='notice '+type;
+ el.textContent=text;
+}
+
+function showRegister(){
+ document.getElementById('loginForm').classList.add('hidden');
+ document.getElementById('registerForm').classList.remove('hidden');
+}
+function showLogin(){
+ document.getElementById('registerForm').classList.add('hidden');
+ document.getElementById('loginForm').classList.remove('hidden');
+}
+
+async function register(){
+ const name=document.getElementById('regName').value.trim();
+ const phone=document.getElementById('regPhone').value.trim();
+ const email=document.getElementById('regEmail').value.trim();
+ const password=document.getElementById('regPassword').value;
+
+ if(!name||!phone||!email||password.length<8){
+  return message('authMessage','Please fill all details. Password must be at least 8 characters.','error');
+ }
+
+ const {data,error}=await db.auth.signUp({email,password});
+
+ if(error)return message('authMessage',error.message,'error');
+
+ if(data.user){
+  message('authMessage',
+   'Registration submitted. Please verify your email if requested. Seller profile setup requires the database configuration.',
+   'success');
+ }
+}
+
+async function login(){
+ const email=document.getElementById('loginEmail').value.trim();
+ const password=document.getElementById('loginPassword').value;
+
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+
+ if(error)return message('authMessage',error.message,'error');
+
+ currentUser=data.user;
+ await loadSeller();
+}
+
+async function logout(){
+ await db.auth.signOut();
+ currentUser=null;
+ sellerData=null;
+ document.getElementById('dashboard').classList.add('hidden');
+ document.getElementById('authBox').classList.remove('hidden');
+}
+
+async function loadSeller(){
+ document.getElementById('authBox').classList.add('hidden');
+ document.getElementById('dashboard').classList.remove('hidden');
+
+ const {data,error}=await db.from('seller_profiles')
+  .select('*').eq('id',currentUser.id).maybeSingle();
+
+ if(error){
+  document.getElementById('sellerName').textContent=currentUser.email;
+  document.getElementById('sellerStatus').textContent='Setup Required';
+  message('approvalMessage','Seller database setup is pending. Please complete the database and security setup before uploading products.');
+  return;
+ }
+
+ if(!data){
+  document.getElementById('sellerStatus').textContent='Profile not found';
+  message('approvalMessage','Your login works. Seller profile needs to be created in the database.');
+  return;
+ }
+
+ sellerData=data;
+ document.getElementById('sellerName').textContent=data.full_name||currentUser.email;
+ document.getElementById('sellerStatus').textContent=data.status||'Pending';
+
+ if(data.status!=='approved'){
+  message('approvalMessage','Your seller account is awaiting Admin approval. Product upload is currently locked.');
+  return;
+ }
+
+ document.getElementById('approvalMessage').textContent='Your seller account is approved.';
+ document.getElementById('approvalMessage').className='notice success';
+ document.getElementById('sellerWorkspace').classList.remove('hidden');
+ await loadMyProducts();
+}
+
+function showTab(id,btn){
+ document.querySelectorAll('#sellerWorkspace .tabs button').forEach(b=>b.classList.remove('active'));
+ btn.classList.add('active');
+ ['upload','myproducts','myorders','earnings'].forEach(t=>{
+  document.getElementById(t).classList.toggle('hidden',t!==id);
+ });
+}
+
+async function uploadProduct(){
+ if(!sellerData||sellerData.status!=='approved'){
+  return message('productMessage','Admin approval is required first.','error');
+ }
+
+ const name=document.getElementById('pName').value.trim();
+ const category=document.getElementById('pCategory').value.trim();
+ const brand=document.getElementById('pBrand').value.trim();
+ const price=Number(document.getElementById('pPrice').value);
+ const mrp=Number(document.getElementById('pMrp').value);
+ const stock=Number(document.getElementById('pStock').value);
+ const image=document.getElementById('pImage').value.trim();
+ const description=document.getElementById('pDescription').value.trim();
+
+ if(!name||!category||!price||price<1||stock<0||!image){
+  return message('productMessage','Please enter product name, category, valid price, stock and image URL.','error');
+ }
+
+ const {error}=await db.from('products').insert({
+  name,category,brand,price,mrp,
+  image,image_url:image,description,
+  seller_id:currentUser.id,
+  stock,
+  is_active:false
+ });
+
+ if(error){
+  return message('productMessage','Product upload failed: '+error.message,'error');
+ }
+
+ message('productMessage','Product submitted for Admin approval.','success');
+ ['pName','pCategory','pBrand','pPrice','pMrp','pStock','pImage','pDescription'].forEach(id=>{
+  document.getElementById(id).value='';
+ });
+ await loadMyProducts();
+}
+
+async function loadMyProducts(){
+ const {data,error}=await db.from('products')
+  .select('*').eq('seller_id',currentUser.id);
+
+ if(error){
+  document.getElementById('productsList').textContent='Product database setup required.';
+  return;
+ }
+
+ document.getElementById('productCount').textContent=(data||[]).length;
+
+ const box=document.getElementById('productsList');
+ box.innerHTML='';
+
+ if(!data||!data.length){
+  box.textContent='No products uploaded yet.';
+  return;
+ }
+
+ data.forEach(p=>{
+  const div=document.createElement('div');
+  div.className='notice';
+  div.textContent=p.name+' | ₹'+p.price+' | '+(p.is_active?'Active':'Pending approval');
+  box.appendChild(div);
+ });
+}
+
+db.auth.getSession().then(({data})=>{
+ if(data.session){
+  currentUser=data.session.user;
+  loadSeller();
+ }
+});
+</script>
+</body>
+</html>
