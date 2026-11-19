@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA Store - Seller Registration</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #f3f5fa;
+  color: #182033;
+}
+
+.container {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 25px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+h1 {
+  text-align: center;
+  color: #185adb;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+textarea {
+  min-height: 80px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 22px;
+  background: #185adb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.note {
+  background: #fff8e8;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#message {
+  display: none;
+  margin-top: 15px;
+  padding: 12px;
+  background: #fff0f0;
+  color: #9b2424;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>VIKKA STORE</h1>
+<p class="subtitle">Seller Registration Form</p>
+
+<form id="sellerForm">
+
+<label>Seller का पूरा नाम *</label>
+<input type="text" name="fullName" required>
+
+<label>दुकान / Business का नाम *</label>
+<input type="text" name="shopName" required>
+
+<label>मोबाइल नंबर *</label>
+<input type="tel" name="mobile"
+pattern="[6-9][0-9]{9}"
+maxlength="10"
+placeholder="10 अंकों का मोबाइल नंबर"
+required>
+
+<label>Email Address *</label>
+<input type="email" name="email" required>
+
+<label>Password *</label>
+<input type="password" name="password"
+minlength="8" required>
+
+<label>दुकान का पूरा पता *</label>
+<textarea name="address" required></textarea>
+
+<label>Aadhaar के आखिरी 4 अंक *</label>
+<input type="text" name="aadhaarLast4"
+inputmode="numeric"
+pattern="[0-9]{4}"
+maxlength="4"
+placeholder="आखिरी 4 अंक"
+required>
+
+<label>PAN Card Number *</label>
+<input type="text" id="pan"
+name="pan"
+maxlength="10"
+pattern="[A-Z]{5}[0-9]{4}[A-Z]"
+placeholder="ABCDE1234F"
+required>
+
+<div class="note">
+<strong>Document Verification:</strong><br>
+Seller को अपना Original Aadhaar और PAN Card Admin को physically दिखाना होगा।
+Admin जाँच के बाद Seller को Approve या Reject करेगा।
+Approval के बाद ही Seller सामान Upload कर सकेगा।
+</div>
+
+<button type="submit">
+Registration Submit
+</button>
+
+<div id="message"></div>
+
+</form>
+
+</div>
+
+<script>
+const form = document.getElementById("sellerForm");
+const pan = document.getElementById("pan");
+const message = document.getElementById("message");
+
+pan.addEventListener("input", function() {
+  this.value = this.value.toUpperCase();
+});
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  message.style.display = "block";
+  message.innerText =
+  "यह Registration Form अभी Supabase Database से जुड़ा नहीं है। कोई जानकारी सेव नहीं हुई है।";
+});
+</script>
+
+</body>
+</html>
