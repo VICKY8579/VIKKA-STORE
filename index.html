@@ -7,7 +7,7 @@
 <meta name="description" content="VIKKA Store - Your Online Shopping Partner">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/vikka-logo.png">
-<title>VIKKA Store | Online Shopping</title>
+<title>VIKKA Store - Online Shopping</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -16,8 +16,8 @@
   --navy:#142b4a;
   --blue:#2874a6;
   --orange:#ffbd45;
-  --green:#087443;
   --bg:#f5f7fa;
+  --green:#087443;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#222}
@@ -27,17 +27,17 @@ header{background:var(--navy);color:white;padding:12px 5%;position:sticky;top:0;
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:10px;color:white;text-decoration:none}
 .logo img{width:48px;height:48px;object-fit:contain;background:white;border-radius:7px}
-.logo strong{font-size:25px}
+.logo strong{font-size:24px}
 .logo span{color:var(--orange)}
-.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
 .btn{border:0;border-radius:7px;padding:11px 14px;font-weight:bold}
 .orange{background:var(--orange);color:var(--navy)}
 .white{background:white;color:var(--navy)}
 .blue{background:var(--navy);color:white}
 .outline{background:white;color:var(--navy);border:1px solid var(--navy)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.search-area{background:white;padding:15px 5%}
-#search{display:block;width:100%;max-width:850px;margin:auto;padding:13px;border:1px solid #ccd2dc;border-radius:8px;font-size:16px}
+.btn:disabled{opacity:.5}
+.search-area{background:white;padding:16px 5%}
+#search{width:100%;max-width:850px;display:block;margin:auto;padding:13px;border:1px solid #ccd2dc;border-radius:8px}
 .hero{margin:20px 5%;padding:32px 24px;border-radius:13px;background:linear-gradient(120deg,var(--navy),var(--blue));color:white;display:flex;justify-content:space-between;align-items:center;gap:15px}
 .hero h1{font-size:30px;margin:0 0 10px}
 .hero p{line-height:1.5;margin:0}
@@ -51,12 +51,12 @@ h2{color:var(--navy);margin:22px 0 12px}
 .product-card{background:white;border-radius:10px;padding:12px;box-shadow:0 2px 9px #00000012;min-width:0}
 .product-card img{width:100%;height:165px;object-fit:contain;background:#f2f4f6;border-radius:7px}
 .product-card h3{font-size:16px;margin:10px 0 6px;overflow-wrap:anywhere}
-.description{font-size:13px;color:#666;line-height:1.4}
+.description{font-size:13px;color:#666;line-height:1.5}
 .price{font-size:19px;font-weight:bold;color:var(--green)}
 .mrp{font-size:13px;color:#777;text-decoration:line-through;margin-left:7px}
 .card-buttons{display:flex;gap:6px;margin-top:10px}
 .card-buttons button{flex:1;padding:10px 5px;font-size:13px}
-.status{background:white;padding:25px;border-radius:9px;text-align:center;grid-column:1/-1}
+.status{background:white;padding:25px;border-radius:9px;text-align:center;grid-column:1/-1;line-height:1.5}
 footer{background:var(--navy);color:white;text-align:center;padding:24px 5%;line-height:1.8}
 footer a{color:var(--orange);margin:0 8px;text-decoration:none}
 .overlay{display:none;position:fixed;inset:0;background:#0009;z-index:30;align-items:center;justify-content:center;padding:14px}
@@ -67,7 +67,7 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
 .close{border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:21px}
 .cart-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ddd}
 .qty{display:flex;align-items:center;gap:7px}
-.qty button{width:28px;height:28px;border:1px solid #ccc;background:white;border-radius:5px}
+.qty button{width:29px;height:29px;border:1px solid #ccc;background:white;border-radius:5px}
 .field{margin:13px 0}
 .field label{display:block;font-weight:bold;margin-bottom:6px}
 .field input{width:100%;padding:12px;border:1px solid #ccc;border-radius:7px}
@@ -84,20 +84,19 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
  .product-card{padding:9px}
  .product-card img{height:130px}
  .card-buttons{flex-direction:column}
- .header-buttons .btn{padding:9px;font-size:13px}
+ .actions .btn{padding:9px;font-size:13px}
 }
 </style>
 </head>
 
 <body>
-
 <header>
  <div class="top">
   <a class="logo" href="/">
-   <img src="/vikka-logo.png" alt="VIKKA Logo">
+   <img src="/vikka-logo.png" alt="VIKKA Store">
    <strong>VIKKA <span>STORE</span></strong>
   </a>
-  <div class="header-buttons">
+  <div class="actions">
    <button class="btn white" id="loginButton">Login</button>
    <button class="btn orange" id="cartButton">Cart (<span id="cartCount">0</span>)</button>
   </div>
@@ -120,10 +119,9 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
 <main>
  <h2>Shop by Category</h2>
  <div id="categories"></div>
-
  <h2 id="allProducts">All Products</h2>
  <div id="productGrid">
-  <div class="status">Loading products...</div>
+  <div class="status">Connecting to VIKKA Store...</div>
  </div>
 </main>
 
@@ -133,13 +131,12 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
  <p>WhatsApp: +91 85799 70090</p>
  <p>
   <a href="/seller.html">Become a Seller</a>
-  <a href="/admin.html">Admin</a>
+  <a href="/admin.html">Admin Login</a>
   <a href="https://wa.me/918579970090">Contact Us</a>
  </p>
- <small>© <span id="year"></span> VIKKA Store</small>
+ <small>© <span id="year"></span> VIKKA Store. All rights reserved.</small>
 </footer>
 
-<!-- CART -->
 <div class="overlay" id="cartOverlay">
  <div class="panel">
   <div class="panel-head">
@@ -149,11 +146,10 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
   <div id="cartItems"></div>
   <h3 id="cartTotal"></h3>
   <button class="btn orange wide" id="checkoutButton">Order on WhatsApp</button>
-  <p class="small">Order details will be sent to VIKKA Store on WhatsApp. Final availability and delivery will be confirmed by the store.</p>
+  <p class="small">Please confirm product availability, delivery charges and final order amount with the store.</p>
  </div>
 </div>
 
-<!-- CUSTOMER LOGIN -->
 <div class="overlay" id="accountOverlay">
  <div class="panel">
   <div class="panel-head">
@@ -163,11 +159,11 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
   <p id="accountMessage" class="small">Login to your VIKKA account.</p>
   <form id="accountForm">
    <div class="field">
-    <label>Email</label>
+    <label for="email">Email</label>
     <input id="email" type="email" required>
    </div>
    <div class="field">
-    <label>Password</label>
+    <label for="password">Password</label>
     <input id="password" type="password" minlength="6" required>
    </div>
    <button class="btn blue wide" id="accountSubmit" type="submit">Login</button>
@@ -177,7 +173,6 @@ footer a{color:var(--orange);margin:0 8px;text-decoration:none}
  </div>
 </div>
 
-<!-- PRODUCT DETAILS -->
 <div class="overlay" id="detailOverlay">
  <div class="panel">
   <div class="panel-head">
@@ -197,9 +192,8 @@ const WHATSAPP_NUMBER = '918579970090';
 
 let db = null;
 let allProducts = [];
-let visibleProducts = [];
-let selectedCategory = 'All';
 let cart = [];
+let selectedCategory = 'All';
 let authMode = 'login';
 let currentSession = null;
 
@@ -210,20 +204,21 @@ function money(value) {
  return Number.isFinite(n) ? '₹' + n.toLocaleString('en-IN') : 'Price unavailable';
 }
 
-function nameOf(p) {
- return String(p.name || 'Product');
+function productName(p) {
+ return String(p.name || p.title || p.product_name || 'Product');
 }
 
-function priceOf(p) {
- return p.price === null || p.price === undefined || p.price === '' ? null : p.price;
+function productPrice(p) {
+ const value = p.price ?? p.selling_price;
+ return value === null || value === undefined || value === '' ? null : value;
 }
 
-function imageOf(p) {
- const value = p.image_url || p.image || '';
+function productImage(p) {
+ const value = p.image_url || p.image || p.photo || '';
  if (!value) return '';
  try {
   const url = new URL(String(value), location.href);
-  return ['https:','http:'].includes(url.protocol) ? url.href : '';
+  return ['http:','https:'].includes(url.protocol) ? url.href : '';
  } catch {
   return '';
  }
@@ -269,38 +264,35 @@ function buildCategories() {
   const button = document.createElement('button');
   button.className = 'category' + (selectedCategory === name ? ' active' : '');
   button.textContent = name === 'All' ? 'All Products' : name;
-
   button.addEventListener('click', () => {
    selectedCategory = name;
    buildCategories();
    renderProducts();
   });
-
   $('categories').appendChild(button);
  });
 }
 
-function productCard(p) {
+function createCard(p) {
  const card = document.createElement('article');
  card.className = 'product-card';
 
- const src = imageOf(p);
-
+ const src = productImage(p);
  if (src) {
   const img = document.createElement('img');
   img.src = src;
-  img.alt = nameOf(p);
+  img.alt = productName(p);
   img.loading = 'lazy';
   img.onerror = () => img.remove();
   card.appendChild(img);
  }
 
  const title = document.createElement('h3');
- title.textContent = nameOf(p);
+ title.textContent = productName(p);
  card.appendChild(title);
 
  if (p.brand) {
-  const brand = document.createElement('div');
+  const brand = document.createElement('p');
   brand.className = 'description';
   brand.textContent = String(p.brand);
   card.appendChild(brand);
@@ -308,7 +300,7 @@ function productCard(p) {
 
  const price = document.createElement('div');
  price.className = 'price';
- price.textContent = priceOf(p) === null ? 'Price unavailable' : money(priceOf(p));
+ price.textContent = productPrice(p) === null ? 'Price unavailable' : money(productPrice(p));
 
  if (p.mrp && Number(p.mrp) > Number(p.price)) {
   const mrp = document.createElement('span');
@@ -328,35 +320,30 @@ function productCard(p) {
  const buttons = document.createElement('div');
  buttons.className = 'card-buttons';
 
- const view = document.createElement('button');
- view.className = 'btn outline';
- view.textContent = 'Details';
- view.addEventListener('click', () => showDetails(p));
+ const details = document.createElement('button');
+ details.className = 'btn outline';
+ details.textContent = 'Details';
+ details.addEventListener('click', () => showDetails(p));
 
  const add = document.createElement('button');
  add.className = 'btn blue';
  add.textContent = 'Add to Cart';
  add.addEventListener('click', () => addToCart(p));
 
- buttons.append(view, add);
+ buttons.append(details, add);
  card.appendChild(buttons);
-
  return card;
 }
 
 function renderProducts() {
  const term = $('search').value.trim().toLowerCase();
 
- visibleProducts = allProducts.filter(p => {
+ const filtered = allProducts.filter(p => {
   if (p.is_active === false) return false;
-
   const category = String(p.category || '');
   const searchable = [
-   p.name || '',
-   p.brand || '',
-   p.category || '',
-   p.description || '',
-   p.specs || ''
+   p.name || '', p.brand || '', p.category || '',
+   p.description || '', p.specs || ''
   ].join(' ').toLowerCase();
 
   return (selectedCategory === 'All' || category === selectedCategory)
@@ -365,44 +352,51 @@ function renderProducts() {
 
  $('productGrid').replaceChildren();
 
- if (!visibleProducts.length) {
+ if (!filtered.length) {
   showStatus(allProducts.length ? 'No matching products found.' : 'No products available yet.');
   return;
  }
 
- visibleProducts.forEach(p => $('productGrid').appendChild(productCard(p)));
+ filtered.forEach(p => $('productGrid').appendChild(createCard(p)));
 }
 
 function saveCart() {
  try {
   localStorage.setItem('vikka_cart', JSON.stringify(cart));
- } catch (e) {
-  console.warn('Cart could not be saved locally', e);
+ } catch (error) {
+  console.warn('Cart storage unavailable', error);
  }
-
- const count = cart.reduce((sum,p) => sum + Number(p.quantity || 1),0);
- $('cartCount').textContent = String(count);
+ $('cartCount').textContent = String(
+  cart.reduce((sum,p) => sum + Number(p.quantity || 1),0)
+ );
 }
 
 function addToCart(p) {
- const id = p.id;
- const found = cart.find(x => String(x.id) === String(id));
+ const id = p.id ?? productName(p);
+ const existing = cart.find(x => String(x.id ?? productName(x)) === String(id));
 
- if (found) {
-  found.quantity = Number(found.quantity || 1) + 1;
+ if (existing) {
+  existing.quantity = Number(existing.quantity || 1) + 1;
  } else {
   cart.push({...p, quantity:1});
  }
-
  saveCart();
- alert(nameOf(p) + ' added to cart.');
+ alert(productName(p) + ' added to cart.');
+}
+
+function changeQuantity(index,change) {
+ if (!cart[index]) return;
+ cart[index].quantity = Number(cart[index].quantity || 1) + change;
+ if (cart[index].quantity <= 0) cart.splice(index,1);
+ saveCart();
+ renderCart();
 }
 
 function renderCart() {
  $('cartItems').replaceChildren();
 
  if (!cart.length) {
-  const empty = document.createElement('p');
+  const empty = document.createElement('div');
   empty.className = 'status';
   empty.textContent = 'Your cart is empty.';
   $('cartItems').appendChild(empty);
@@ -420,12 +414,11 @@ function renderCart() {
 
   const info = document.createElement('div');
   const title = document.createElement('strong');
-  title.textContent = nameOf(p);
+  title.textContent = productName(p);
 
   const sub = document.createElement('div');
   sub.className = 'description';
-  sub.textContent = money(priceOf(p)) + ' × ' + p.quantity;
-
+  sub.textContent = money(productPrice(p)) + ' × ' + p.quantity;
   info.append(title,sub);
 
   const controls = document.createElement('div');
@@ -433,55 +426,44 @@ function renderCart() {
 
   const minus = document.createElement('button');
   minus.textContent = '−';
-  minus.addEventListener('click', () => changeQuantity(index,-1));
+  minus.addEventListener('click',() => changeQuantity(index,-1));
 
-  const number = document.createElement('span');
-  number.textContent = String(p.quantity);
+  const count = document.createElement('span');
+  count.textContent = String(p.quantity);
 
   const plus = document.createElement('button');
   plus.textContent = '+';
-  plus.addEventListener('click', () => changeQuantity(index,1));
+  plus.addEventListener('click',() => changeQuantity(index,1));
 
-  controls.append(minus,number,plus);
+  controls.append(minus,count,plus);
   row.append(info,controls);
   $('cartItems').appendChild(row);
 
-  if (priceOf(p) !== null && Number.isFinite(Number(priceOf(p)))) {
-   total += Number(priceOf(p)) * Number(p.quantity);
-  }
+  const n = Number(productPrice(p));
+  if (Number.isFinite(n)) total += n * Number(p.quantity);
  });
 
  $('cartTotal').textContent = 'Total: ' + money(total);
 }
 
-function changeQuantity(index,change) {
- if (!cart[index]) return;
- cart[index].quantity = Number(cart[index].quantity) + change;
-
- if (cart[index].quantity <= 0) cart.splice(index,1);
-
- saveCart();
- renderCart();
-}
-
 function showDetails(p) {
  $('detailContent').replaceChildren();
 
- const src = imageOf(p);
+ const src = productImage(p);
  if (src) {
   const img = document.createElement('img');
   img.className = 'detail-image';
   img.src = src;
-  img.alt = nameOf(p);
+  img.alt = productName(p);
   $('detailContent').appendChild(img);
  }
 
  const title = document.createElement('h3');
- title.textContent = nameOf(p);
+ title.textContent = productName(p);
 
  const price = document.createElement('div');
  price.className = 'price';
- price.textContent = priceOf(p) === null ? 'Price unavailable' : money(priceOf(p));
+ price.textContent = productPrice(p) === null ? 'Price unavailable' : money(productPrice(p));
 
  const description = document.createElement('p');
  description.textContent = p.description || 'No description available.';
@@ -495,7 +477,7 @@ function showDetails(p) {
  const add = document.createElement('button');
  add.className = 'btn blue wide';
  add.textContent = 'Add to Cart';
- add.addEventListener('click', () => {
+ add.addEventListener('click',() => {
   addToCart(p);
   closePanel('detailOverlay');
  });
@@ -507,23 +489,24 @@ function showDetails(p) {
 function checkout() {
  if (!cart.length) return;
 
- const lines = cart.map((p,i) => {
-  const itemTotal = priceOf(p) === null
+ const lines = cart.map((p,index) => {
+  const price = productPrice(p);
+  const subtotal = price === null
    ? 'Price to confirm'
-   : money(Number(priceOf(p)) * Number(p.quantity));
+   : money(Number(price) * Number(p.quantity));
 
-  return ${i+1}. ${nameOf(p)} | Qty: ${p.quantity} | ${itemTotal};
+  return ${index+1}. ${productName(p)} | Qty: ${p.quantity} | ${subtotal};
  });
 
  const total = cart.reduce((sum,p) => {
-  const price = Number(priceOf(p));
-  return sum + (Number.isFinite(price) ? price * Number(p.quantity) : 0);
+  const n = Number(productPrice(p));
+  return sum + (Number.isFinite(n) ? n * Number(p.quantity) : 0);
  },0);
 
  const message =
   'Hello VIKKA Store, I want to order:\n' +
   lines.join('\n') +
-  '\nTotal: ' + money(total) +
+  '\nTotal (excluding unavailable prices): ' + money(total) +
   '\nPlease confirm availability and delivery.';
 
  window.open(
@@ -532,11 +515,11 @@ function checkout() {
  );
 }
 
-function updateAccount() {
+function updateAccountUI() {
  if (currentSession) {
   $('loginButton').textContent = 'My Account';
   $('accountHeading').textContent = 'Customer Account';
-  $('accountMessage').textContent = currentSession.user.email;
+  $('accountMessage').textContent = currentSession.user.email || '';
   $('accountForm').style.display = 'none';
   $('toggleAccount').style.display = 'none';
   $('logoutButton').style.display = 'block';
@@ -556,17 +539,14 @@ async function loadProducts() {
  showStatus('Connecting to VIKKA Store...');
 
  if (!window.supabase || !window.supabase.createClient) {
-  showStatus('Supabase library did not load. Please refresh the page.');
+  showStatus('Supabase library did not load. Please refresh.');
   return;
  }
 
  try {
   db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-  const result = await db
-   .from('products')
-   .select('*')
-   .order('created_at',{ascending:false});
+  const result = await db.from('products').select('*');
 
   if (result.error) throw result.error;
 
@@ -579,16 +559,16 @@ async function loadProducts() {
   if (sessionResult.error) throw sessionResult.error;
 
   currentSession = sessionResult.data.session;
-  updateAccount();
+  updateAccountUI();
 
   db.auth.onAuthStateChange((_event,session) => {
    currentSession = session;
-   updateAccount();
+   updateAccountUI();
   });
 
- } catch (error) {
+ } catch(error) {
   console.error('VIKKA Supabase error:',error);
-  showStatus('Products could not load: ' + (error.message || 'Check Supabase permissions and API key.'));
+  showStatus('Products could not load: ' + (error.message || 'Check Supabase connection and permissions.'));
  }
 }
 
@@ -602,18 +582,17 @@ $('cartButton').addEventListener('click',() => {
 $('checkoutButton').addEventListener('click',checkout);
 
 $('loginButton').addEventListener('click',() => {
- updateAccount();
+ updateAccountUI();
  openPanel('accountOverlay');
 });
 
 $('toggleAccount').addEventListener('click',() => {
  authMode = authMode === 'login' ? 'signup' : 'login';
- updateAccount();
+ updateAccountUI();
 });
 
 $('accountForm').addEventListener('submit',async event => {
  event.preventDefault();
-
  if (!db) {
   alert('Store connection is not ready.');
   return;
@@ -630,10 +609,10 @@ $('accountForm').addEventListener('submit',async event => {
   if (result.error) throw result.error;
 
   currentSession = result.data.session;
-  updateAccount();
+  updateAccountUI();
 
   if (authMode === 'signup' && !currentSession) {
-   alert('Registration submitted. Please check your email for confirmation.');
+   alert('Registration submitted. Check your email to confirm.');
   } else {
    alert('Login successful.');
   }
@@ -644,7 +623,6 @@ $('accountForm').addEventListener('submit',async event => {
 
 $('logoutButton').addEventListener('click',async() => {
  if (!db) return;
-
  const {error} = await db.auth.signOut();
 
  if (error) {
@@ -654,20 +632,19 @@ $('logoutButton').addEventListener('click',async() => {
 
  currentSession = null;
  authMode = 'login';
- updateAccount();
+ updateAccountUI();
 });
 
 $('year').textContent = new Date().getFullYear();
 
 try {
- const saved = JSON.parse(localStorage.getItem('vikka_cart') || '[]');
- if (Array.isArray(saved)) cart = saved;
+ const stored = JSON.parse(localStorage.getItem('vikka_cart') || '[]');
+ if (Array.isArray(stored)) cart = stored;
 } catch {
  cart = [];
 }
+
 saveCart();
 loadProducts();
 
 if ('serviceWorker' in navigator) {
- window.addEventListener('load',() => {
-  navigator.serv
