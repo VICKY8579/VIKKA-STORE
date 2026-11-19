@@ -1,525 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#142b4a">
-  <meta name="description" content="Shop online at VIKKA Store.">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="vikka-logo.png" type="image/png">
-  <title>VIKKA Store | Online Shopping</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142b4a">
+<meta name="description" content="VIKKA Store - Your Online Shopping Partner">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/vikka-logo.png">
+<title>VIKKA Store | Online Shopping</title>
 
-  <style>
-    :root {
-      --navy: #142b4a;
-      --blue: #2874a6;
-      --orange: #ffbd45;
-      --bg: #f5f7fa;
-      --green: #087443;
-    }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: #202938;
-      background: var(--bg);
-    }
-
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-
-    .site-header {
-      background: var(--navy);
-      color: white;
-      padding: 12px 5%;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      box-shadow: 0 2px 9px #0002;
-    }
-
-    .top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: white;
-      text-decoration: none;
-    }
-
-    .brand img {
-      width: 54px;
-      height: 54px;
-      object-fit: contain;
-      background: white;
-      border-radius: 8px;
-    }
-
-    .brand-name {
-      font-size: 25px;
-      font-weight: 800;
-    }
-
-    .brand-name span { color: var(--orange); }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 7px;
-      padding: 11px 14px;
-      font-weight: 700;
-    }
-
-    .btn-orange {
-      background: var(--orange);
-      color: var(--navy);
-    }
-
-    .btn-light {
-      background: white;
-      color: var(--navy);
-    }
-
-    .btn-blue {
-      background: var(--navy);
-      color: white;
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: var(--navy);
-      border: 1px solid var(--navy);
-    }
-
-    .search-wrap {
-      padding: 16px 5%;
-      background: white;
-    }
-
-    .search-row {
-      max-width: 900px;
-      margin: auto;
-    }
-
-    .search-row input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #cbd2dc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    .hero {
-      margin: 20px 5%;
-      padding: 30px;
-      border-radius: 14px;
-      background: linear-gradient(120deg, var(--navy), var(--blue));
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .hero h1 {
-      font-size: 30px;
-      margin: 0 0 9px;
-    }
-
-    .hero p {
-      margin: 0;
-      line-height: 1.5;
-    }
-
-    .hero .btn { margin-top: 16px; }
-    .hero-mark { font-size: 64px; }
-
-    main { padding: 0 5% 36px; }
-
-    h2 {
-      color: var(--navy);
-      margin: 22px 0 12px;
-    }
-
-    .category-list {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .category {
-      border: 1px solid var(--navy);
-      background: white;
-      color: var(--navy);
-      border-radius: 22px;
-      padding: 9px 14px;
-    }
-
-    .category.active {
-      background: var(--navy);
-      color: white;
-    }
-
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-      gap: 15px;
-    }
-
-    .product-card {
-      background: white;
-      border-radius: 11px;
-      padding: 12px;
-      box-shadow: 0 2px 10px #0000000d;
-      min-width: 0;
-    }
-
-    .product-image {
-      height: 170px;
-      width: 100%;
-      object-fit: contain;
-      background: #f3f5f7;
-      border-radius: 8px;
-    }
-
-    .product-card h3 {
-      font-size: 16px;
-      margin: 10px 0 6px;
-      overflow-wrap: anywhere;
-    }
-
-    .muted {
-      color: #657080;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .price {
-      font-size: 19px;
-      color: var(--green);
-      font-weight: 800;
-    }
-
-    .mrp {
-      font-size: 13px;
-      color: #777;
-      text-decoration: line-through;
-      margin-left: 7px;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 7px;
-      margin-top: 10px;
-    }
-
-    .card-actions button {
-      flex: 1;
-      padding: 10px 5px;
-      font-size: 13px;
-    }
-
-    .status {
-      background: white;
-      border-radius: 9px;
-      padding: 24px;
-      text-align: center;
-      grid-column: 1/-1;
-      color: #4b5563;
-    }
-
-    .section-note {
-      font-size: 13px;
-      color: #667085;
-    }
-
-    .footer {
-      background: var(--navy);
-      color: white;
-      padding: 24px 5%;
-      text-align: center;
-    }
-
-    .footer a {
-      color: var(--orange);
-      margin: 0 8px;
-      text-decoration: none;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: #0008;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 15px;
-      z-index: 30;
-    }
-
-    .overlay.show { display: flex; }
-
-    .panel {
-      background: white;
-      width: min(560px, 100%);
-      max-height: 90vh;
-      overflow: auto;
-      border-radius: 13px;
-      padding: 20px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .panel-head h2 { margin: 0; }
-
-    .close {
-      border: 0;
-      background: #edf0f4;
-      border-radius: 50%;
-      width: 35px;
-      height: 35px;
-      font-size: 20px;
-    }
-
-    .cart-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 12px 0;
-    }
-
-    .qty {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .qty button {
-      border: 1px solid #ccd2dc;
-      background: white;
-      border-radius: 5px;
-      width: 28px;
-      height: 28px;
-    }
-
-    .form-field { margin: 12px 0; }
-
-    .form-field label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-
-    .form-field input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #cbd2dc;
-      border-radius: 7px;
-    }
-
-    .wide {
-      width: 100%;
-      margin-top: 10px;
-    }
-
-    .detail-img {
-      width: 100%;
-      height: 230px;
-      object-fit: contain;
-      background: #f4f5f7;
-      border-radius: 8px;
-    }
-
-    .empty {
-      padding: 20px;
-      text-align: center;
-      color: #667085;
-    }
-
-    @media(max-width:520px) {
-      .brand-name { font-size: 21px; }
-      .brand img { width: 45px; height: 45px; }
-      .hero { padding: 23px 18px; }
-      .hero h1 { font-size: 24px; }
-      .hero-mark { font-size: 42px; }
-
-      .product-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 9px;
-      }
-
-      .product-card { padding: 9px; }
-      .product-image { height: 135px; }
-      .card-actions { flex-direction: column; }
-
-      .actions .btn {
-        padding: 9px 10px;
-        font-size: 13px;
-      }
-    }
-  </style>
+<style>
+:root {
+  --navy:#142b4a;
+  --blue:#2874a6;
+  --orange:#ffbd45;
+  --green:#087443;
+  --bg:#f5f7fa;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#222}
+button,input{font:inherit}
+button{cursor:pointer}
+header{background:var(--navy);color:white;padding:12px 5%;position:sticky;top:0;z-index:10}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;color:white;text-decoration:none}
+.logo img{width:48px;height:48px;object-fit:contain;background:white;border-radius:7px}
+.logo strong{font-size:25px}
+.logo span{color:var(--orange)}
+.header-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:7px;padding:11px 14px;font-weight:bold}
+.orange{background:var(--orange);color:var(--navy)}
+.white{background:white;color:var(--navy)}
+.blue{background:var(--navy);color:white}
+.outline{background:white;color:var(--navy);border:1px solid var(--navy)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.search-area{background:white;padding:15px 5%}
+#search{display:block;width:100%;max-width:850px;margin:auto;padding:13px;border:1px solid #ccd2dc;border-radius:8px;font-size:16px}
+.hero{margin:20px 5%;padding:32px 24px;border-radius:13px;background:linear-gradient(120deg,var(--navy),var(--blue));color:white;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.hero h1{font-size:30px;margin:0 0 10px}
+.hero p{line-height:1.5;margin:0}
+.hero-icon{font-size:55px}
+main{padding:0 5% 40px}
+h2{color:var(--navy);margin:22px 0 12px}
+#categories{display:flex;gap:9px;flex-wrap:wrap}
+.category{border:1px solid var(--navy);background:white;color:var(--navy);padding:9px 15px;border-radius:22px}
+.category.active{background:var(--navy);color:white}
+#productGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
+.product-card{background:white;border-radius:10px;padding:12px;box-shadow:0 2px 9px #00000012;min-width:0}
+.product-card img{width:100%;height:165px;object-fit:contain;background:#f2f4f6;border-radius:7px}
+.product-card h3{font-size:16px;margin:10px 0 6px;overflow-wrap:anywhere}
+.description{font-size:13px;color:#666;line-height:1.4}
+.price{font-size:19px;font-weight:bold;color:var(--green)}
+.mrp{font-size:13px;color:#777;text-decoration:line-through;margin-left:7px}
+.card-buttons{display:flex;gap:6px;margin-top:10px}
+.card-buttons button{flex:1;padding:10px 5px;font-size:13px}
+.status{background:white;padding:25px;border-radius:9px;text-align:center;grid-column:1/-1}
+footer{background:var(--navy);color:white;text-align:center;padding:24px 5%;line-height:1.8}
+footer a{color:var(--orange);margin:0 8px;text-decoration:none}
+.overlay{display:none;position:fixed;inset:0;background:#0009;z-index:30;align-items:center;justify-content:center;padding:14px}
+.overlay.show{display:flex}
+.panel{background:white;border-radius:12px;width:min(550px,100%);max-height:90vh;overflow:auto;padding:20px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-head h2{margin:0}
+.close{border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:21px}
+.cart-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ddd}
+.qty{display:flex;align-items:center;gap:7px}
+.qty button{width:28px;height:28px;border:1px solid #ccc;background:white;border-radius:5px}
+.field{margin:13px 0}
+.field label{display:block;font-weight:bold;margin-bottom:6px}
+.field input{width:100%;padding:12px;border:1px solid #ccc;border-radius:7px}
+.wide{width:100%;margin-top:10px}
+.detail-image{width:100%;height:230px;object-fit:contain;background:#f2f4f6;border-radius:8px}
+.small{font-size:13px;color:#687385;line-height:1.5}
+@media(max-width:520px){
+ .logo strong{font-size:21px}
+ .logo img{width:42px;height:42px}
+ .hero{padding:22px 17px}
+ .hero h1{font-size:24px}
+ .hero-icon{font-size:38px}
+ #productGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .product-card{padding:9px}
+ .product-card img{height:130px}
+ .card-buttons{flex-direction:column}
+ .header-buttons .btn{padding:9px;font-size:13px}
+}
+</style>
 </head>
 
 <body>
 
-<header class="site-header">
-  <div class="top">
-    <a class="brand" href="index.html">
-      <img src="vikka-logo.png" alt="VIKKA Store logo">
-      <div class="brand-name">VIKKA <span>STORE</span></div>
-    </a>
-
-    <div class="actions">
-      <button class="btn btn-light" id="accountBtn">Login</button>
-      <button class="btn btn-orange" id="cartBtn">
-        Cart (<span id="cartCount">0</span>)
-      </button>
-    </div>
+<header>
+ <div class="top">
+  <a class="logo" href="/">
+   <img src="/vikka-logo.png" alt="VIKKA Logo">
+   <strong>VIKKA <span>STORE</span></strong>
+  </a>
+  <div class="header-buttons">
+   <button class="btn white" id="loginButton">Login</button>
+   <button class="btn orange" id="cartButton">Cart (<span id="cartCount">0</span>)</button>
   </div>
+ </div>
 </header>
 
-<div class="search-wrap">
-  <div class="search-row">
-    <input id="search" type="search"
-      placeholder="Search products, brands or categories..."
-      aria-label="Search products">
-  </div>
+<div class="search-area">
+ <input id="search" type="search" placeholder="Search products, brands and categories...">
 </div>
 
 <section class="hero">
-  <div>
-    <h1>Welcome to VIKKA Store</h1>
-    <p>Discover useful products at great prices.<br>
-      Easy shopping. Direct WhatsApp support.</p>
-    <button class="btn btn-orange"
-      onclick="document.getElementById('allProducts').scrollIntoView({behavior:'smooth'})">
-      Shop Now
-    </button>
-  </div>
-  <div class="hero-mark">🛍️</div>
+ <div>
+  <h1>Welcome to VIKKA Store</h1>
+  <p>Your Online Shopping Partner.<br>Discover products at great prices.</p>
+  <button class="btn orange" onclick="document.getElementById('allProducts').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+ </div>
+ <div class="hero-icon">🛍️</div>
 </section>
 
 <main>
-  <h2>Shop by Category</h2>
-  <div id="categories" class="category-list"></div>
+ <h2>Shop by Category</h2>
+ <div id="categories"></div>
 
-  <h2 id="allProducts">All Products</h2>
-  <p class="section-note">
-    Product availability and prices are shown as provided by the store.
-  </p>
-
-  <div id="productGrid" class="product-grid">
-    <div class="status">Loading products...</div>
-  </div>
+ <h2 id="allProducts">All Products</h2>
+ <div id="productGrid">
+  <div class="status">Loading products...</div>
+ </div>
 </main>
 
-<footer class="footer">
-  <strong>VIKKA STORE</strong>
-  <p>Your Online Shopping Partner</p>
-  <p>WhatsApp: +91 85799 70090</p>
-  <p>
-    <a href="seller.html">Become a Seller</a>
-    <a href="mailto:support@vikka-store.netlify.app">Contact</a>
-  </p>
-  <p>© <span id="year"></span> VIKKA Store. All rights reserved.</p>
+<footer>
+ <strong>VIKKA STORE</strong><br>
+ Your Online Shopping Partner
+ <p>WhatsApp: +91 85799 70090</p>
+ <p>
+  <a href="/seller.html">Become a Seller</a>
+  <a href="/admin.html">Admin</a>
+  <a href="https://wa.me/918579970090">Contact Us</a>
+ </p>
+ <small>© <span id="year"></span> VIKKA Store</small>
 </footer>
 
+<!-- CART -->
 <div class="overlay" id="cartOverlay">
-  <div class="panel">
-    <div class="panel-head">
-      <h2>Your Cart</h2>
-      <button class="close" data-close="cartOverlay">×</button>
-    </div>
-    <div id="cartItems"></div>
-    <div id="cartTotal" style="font-weight:800;text-align:right;margin-top:14px"></div>
-    <button class="btn btn-orange wide" id="checkoutBtn">
-      Order on WhatsApp
-    </button>
-    <p class="section-note">
-      Checkout currently sends your cart details to VIKKA Store on WhatsApp.
-      It does not yet save an order in the database.
-    </p>
+ <div class="panel">
+  <div class="panel-head">
+   <h2>My Cart</h2>
+   <button class="close" data-close="cartOverlay">×</button>
   </div>
+  <div id="cartItems"></div>
+  <h3 id="cartTotal"></h3>
+  <button class="btn orange wide" id="checkoutButton">Order on WhatsApp</button>
+  <p class="small">Order details will be sent to VIKKA Store on WhatsApp. Final availability and delivery will be confirmed by the store.</p>
+ </div>
 </div>
 
+<!-- CUSTOMER LOGIN -->
 <div class="overlay" id="accountOverlay">
-  <div class="panel">
-    <div class="panel-head">
-      <h2 id="accountTitle">Customer Login</h2>
-      <button class="close" data-close="accountOverlay">×</button>
-    </div>
-
-    <div id="accountMessage" class="section-note"></div>
-
-    <form id="accountForm">
-      <div class="form-field">
-        <label for="email">Email</label>
-        <input id="email" type="email" required>
-      </div>
-
-      <div class="form-field">
-        <label for="password">Password</label>
-        <input id="password" type="password" required minlength="6">
-      </div>
-
-      <button class="btn btn-blue wide" type="submit" id="accountSubmit">
-        Login
-      </button>
-    </form>
-
-    <button class="btn btn-outline wide" id="toggleAuth">
-      Create new account
-    </button>
-
-    <button class="btn btn-light wide" id="logoutBtn" style="display:none">
-      Logout
-    </button>
+ <div class="panel">
+  <div class="panel-head">
+   <h2 id="accountHeading">Customer Login</h2>
+   <button class="close" data-close="accountOverlay">×</button>
   </div>
+  <p id="accountMessage" class="small">Login to your VIKKA account.</p>
+  <form id="accountForm">
+   <div class="field">
+    <label>Email</label>
+    <input id="email" type="email" required>
+   </div>
+   <div class="field">
+    <label>Password</label>
+    <input id="password" type="password" minlength="6" required>
+   </div>
+   <button class="btn blue wide" id="accountSubmit" type="submit">Login</button>
+  </form>
+  <button class="btn outline wide" id="toggleAccount">Create New Account</button>
+  <button class="btn white wide" id="logoutButton" style="display:none">Logout</button>
+ </div>
 </div>
 
+<!-- PRODUCT DETAILS -->
 <div class="overlay" id="detailOverlay">
-  <div class="panel">
-    <div class="panel-head">
-      <h2>Product Details</h2>
-      <button class="close" data-close="detailOverlay">×</button>
-    </div>
-    <div id="detailContent"></div>
+ <div class="panel">
+  <div class="panel-head">
+   <h2>Product Details</h2>
+   <button class="close" data-close="detailOverlay">×</button>
   </div>
+  <div id="detailContent"></div>
+ </div>
 </div>
 
 <script>
 'use strict';
 
-const SUPABASE_URL =
-  'https://izjlpgpvrmvhcefxulhj.supabase.co';
-
-const SUPABASE_KEY =
-  'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
-
+const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
 const WHATSAPP_NUMBER = '918579970090';
-
-const $ = id => document.getElementById(id);
 
 let db = null;
 let allProducts = [];
@@ -529,386 +203,471 @@ let cart = [];
 let authMode = 'login';
 let currentSession = null;
 
-try {
-  cart = JSON.parse(localStorage.getItem('vikka_cart') || '[]');
-  if (!Array.isArray(cart)) cart = [];
-} catch {
-  cart = [];
-}
+const $ = id => document.getElementById(id);
 
 function money(value) {
-  const n = Number(value);
-  return Number.isFinite(n)
-    ? '₹' + n.toLocaleString('en-IN')
-    : 'Price unavailable';
+ const n = Number(value);
+ return Number.isFinite(n) ? '₹' + n.toLocaleString('en-IN') : 'Price unavailable';
 }
 
-function productName(p) {
-  return String(p.name || p.title || p.product_name || 'Product');
+function nameOf(p) {
+ return String(p.name || 'Product');
 }
 
-function productPrice(p) {
-  const v = p.price ?? p.selling_price;
-  return v === null || v === undefined || v === '' ? null : v;
+function priceOf(p) {
+ return p.price === null || p.price === undefined || p.price === '' ? null : p.price;
 }
 
-function imageUrl(p) {
-  const v = p.image_url || p.image || p.photo || '';
-  if (!v) return '';
-
-  try {
-    const u = new URL(String(v), location.href);
-    return ['https:', 'http:'].includes(u.protocol) ? u.href : '';
-  } catch {
-    return '';
-  }
+function imageOf(p) {
+ const value = p.image_url || p.image || '';
+ if (!value) return '';
+ try {
+  const url = new URL(String(value), location.href);
+  return ['https:','http:'].includes(url.protocol) ? url.href : '';
+ } catch {
+  return '';
+ }
 }
 
-function saveCart() {
-  localStorage.setItem('vikka_cart', JSON.stringify(cart));
-
-  $('cartCount').textContent = cart.reduce(
-    (n, x) => n + (Number(x.quantity) || 1), 0
-  );
+function openPanel(id) {
+ $(id).classList.add('show');
 }
+
+function closePanel(id) {
+ $(id).classList.remove('show');
+}
+
+document.querySelectorAll('[data-close]').forEach(button => {
+ button.addEventListener('click', () => closePanel(button.dataset.close));
+});
+
+document.querySelectorAll('.overlay').forEach(panel => {
+ panel.addEventListener('click', event => {
+  if (event.target === panel) closePanel(panel.id);
+ });
+});
 
 function showStatus(message) {
-  $('productGrid').replaceChildren();
-
-  const d = document.createElement('div');
-  d.className = 'status';
-  d.textContent = message;
-
-  $('productGrid').appendChild(d);
+ $('productGrid').replaceChildren();
+ const div = document.createElement('div');
+ div.className = 'status';
+ div.textContent = message;
+ $('productGrid').appendChild(div);
 }
-
-function openOverlay(id) {
-  $(id).classList.add('show');
-}
-
-function closeOverlay(id) {
-  $(id).classList.remove('show');
-}
-
-document.querySelectorAll('[data-close]').forEach(b => {
-  b.addEventListener('click', () => closeOverlay(b.dataset.close));
-});
-
-document.querySelectorAll('.overlay').forEach(o => {
-  o.addEventListener('click', e => {
-    if (e.target === o) closeOverlay(o.id);
-  });
-});
 
 function buildCategories() {
-  const names = [
-    'All',
-    ...new Set(
-      allProducts
-        .map(p => String(p.category || '').trim())
-        .filter(Boolean)
-    )
-  ];
+ $('categories').replaceChildren();
 
-  $('categories').replaceChildren();
+ const names = ['All', ...new Set(
+  allProducts
+   .filter(p => p.is_active !== false)
+   .map(p => String(p.category || '').trim())
+   .filter(Boolean)
+ )];
 
-  names.forEach(name => {
-    const b = document.createElement('button');
+ names.forEach(name => {
+  const button = document.createElement('button');
+  button.className = 'category' + (selectedCategory === name ? ' active' : '');
+  button.textContent = name === 'All' ? 'All Products' : name;
 
-    b.className =
-      'category' + (selectedCategory === name ? ' active' : '');
-
-    b.textContent = name === 'All' ? 'All Products' : name;
-
-    b.addEventListener('click', () => {
-      selectedCategory = name;
-      buildCategories();
-      renderProducts();
-    });
-
-    $('categories').appendChild(b);
+  button.addEventListener('click', () => {
+   selectedCategory = name;
+   buildCategories();
+   renderProducts();
   });
+
+  $('categories').appendChild(button);
+ });
 }
 
-function createCard(p) {
-  const card = document.createElement('article');
-  card.className = 'product-card';
+function productCard(p) {
+ const card = document.createElement('article');
+ card.className = 'product-card';
 
-  const src = imageUrl(p);
+ const src = imageOf(p);
 
-  if (src) {
-    const img = document.createElement('img');
-    img.className = 'product-image';
-    img.src = src;
-    img.alt = productName(p);
-    img.loading = 'lazy';
-    img.onerror = () => img.remove();
-    card.appendChild(img);
-  }
+ if (src) {
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = nameOf(p);
+  img.loading = 'lazy';
+  img.onerror = () => img.remove();
+  card.appendChild(img);
+ }
 
-  const h = document.createElement('h3');
-  h.textContent = productName(p);
-  card.appendChild(h);
+ const title = document.createElement('h3');
+ title.textContent = nameOf(p);
+ card.appendChild(title);
 
-  if (p.brand) {
-    const brand = document.createElement('div');
-    brand.className = 'muted';
-    brand.textContent = String(p.brand);
-    card.appendChild(brand);
-  }
+ if (p.brand) {
+  const brand = document.createElement('div');
+  brand.className = 'description';
+  brand.textContent = String(p.brand);
+  card.appendChild(brand);
+ }
 
-  const price = document.createElement('div');
-  price.className = 'price';
+ const price = document.createElement('div');
+ price.className = 'price';
+ price.textContent = priceOf(p) === null ? 'Price unavailable' : money(priceOf(p));
 
-  const pv = productPrice(p);
-  price.textContent = pv === null ? 'Price unavailable' : money(pv);
+ if (p.mrp && Number(p.mrp) > Number(p.price)) {
+  const mrp = document.createElement('span');
+  mrp.className = 'mrp';
+  mrp.textContent = money(p.mrp);
+  price.appendChild(mrp);
+ }
+ card.appendChild(price);
 
-  if (p.mrp && Number(p.mrp) > Number(pv)) {
-    const mrp = document.createElement('span');
-    mrp.className = 'mrp';
-    mrp.textContent = money(p.mrp);
-    price.appendChild(mrp);
-  }
+ if (p.description) {
+  const desc = document.createElement('p');
+  desc.className = 'description';
+  desc.textContent = String(p.description);
+  card.appendChild(desc);
+ }
 
-  card.appendChild(price);
+ const buttons = document.createElement('div');
+ buttons.className = 'card-buttons';
 
-  const stock = Number(p.stock);
+ const view = document.createElement('button');
+ view.className = 'btn outline';
+ view.textContent = 'Details';
+ view.addEventListener('click', () => showDetails(p));
 
-  if (p.stock !== undefined && p.stock !== null) {
-    const s = document.createElement('p');
-    s.className = 'muted';
-    s.textContent = stock > 0 ? 'In stock' : 'Currently unavailable';
-    card.appendChild(s);
-  }
+ const add = document.createElement('button');
+ add.className = 'btn blue';
+ add.textContent = 'Add to Cart';
+ add.addEventListener('click', () => addToCart(p));
 
-  const actions = document.createElement('div');
-  actions.className = 'card-actions';
+ buttons.append(view, add);
+ card.appendChild(buttons);
 
-  const details = document.createElement('button');
-  details.className = 'btn btn-outline';
-  details.textContent = 'View Details';
-  details.addEventListener('click', () => showDetails(p));
-
-  const add = document.createElement('button');
-  add.className = 'btn btn-blue';
-  add.textContent = 'Add to Cart';
-  add.disabled = p.stock !== undefined && Number(p.stock) <= 0;
-  add.addEventListener('click', () => addToCart(p));
-
-  actions.append(details, add);
-  card.appendChild(actions);
-
-  return card;
+ return card;
 }
 
 function renderProducts() {
-  const term = $('search').value.trim().toLowerCase();
+ const term = $('search').value.trim().toLowerCase();
 
-  visibleProducts = allProducts.filter(p => {
-    if (p.is_active === false) return false;
+ visibleProducts = allProducts.filter(p => {
+  if (p.is_active === false) return false;
 
-    const category = String(p.category || '');
+  const category = String(p.category || '');
+  const searchable = [
+   p.name || '',
+   p.brand || '',
+   p.category || '',
+   p.description || '',
+   p.specs || ''
+  ].join(' ').toLowerCase();
 
-    const hay = [
-      productName(p),
-      p.description || '',
-      category,
-      p.brand || ''
-    ].join(' ').toLowerCase();
+  return (selectedCategory === 'All' || category === selectedCategory)
+   && searchable.includes(term);
+ });
 
-    return (
-      (selectedCategory === 'All' || category === selectedCategory) &&
-      hay.includes(term)
-    );
-  });
+ $('productGrid').replaceChildren();
 
-  $('productGrid').replaceChildren();
+ if (!visibleProducts.length) {
+  showStatus(allProducts.length ? 'No matching products found.' : 'No products available yet.');
+  return;
+ }
 
-  if (!visibleProducts.length) {
-    showStatus(
-      allProducts.length ? 'No products found.' : 'No products available yet.'
-    );
-    return;
-  }
+ visibleProducts.forEach(p => $('productGrid').appendChild(productCard(p)));
+}
 
-  visibleProducts.forEach(p => {
-    $('productGrid').appendChild(createCard(p));
-  });
+function saveCart() {
+ try {
+  localStorage.setItem('vikka_cart', JSON.stringify(cart));
+ } catch (e) {
+  console.warn('Cart could not be saved locally', e);
+ }
+
+ const count = cart.reduce((sum,p) => sum + Number(p.quantity || 1),0);
+ $('cartCount').textContent = String(count);
 }
 
 function addToCart(p) {
-  if (p.stock !== undefined && Number(p.stock) <= 0) {
-    alert('This product is currently unavailable.');
-    return;
-  }
+ const id = p.id;
+ const found = cart.find(x => String(x.id) === String(id));
 
-  const id = p.id ?? productName(p);
+ if (found) {
+  found.quantity = Number(found.quantity || 1) + 1;
+ } else {
+  cart.push({...p, quantity:1});
+ }
 
-  const found = cart.find(
-    x => String(x.id ?? x.name) === String(id)
-  );
-
-  if (found) {
-    found.quantity = (Number(found.quantity) || 1) + 1;
-  } else {
-    cart.push({ ...p, quantity: 1 });
-  }
-
-  saveCart();
-  alert(productName(p) + ' added to cart.');
-}
-
-function changeQty(index, delta) {
-  if (!cart[index]) return;
-
-  cart[index].quantity =
-    (Number(cart[index].quantity) || 1) + delta;
-
-  if (cart[index].quantity <= 0) {
-    cart.splice(index, 1);
-  }
-
-  saveCart();
-  renderCart();
+ saveCart();
+ alert(nameOf(p) + ' added to cart.');
 }
 
 function renderCart() {
-  $('cartItems').replaceChildren();
+ $('cartItems').replaceChildren();
 
-  if (!cart.length) {
-    $('cartItems').innerHTML =
-      '<div class="empty">Your cart is empty.</div>';
+ if (!cart.length) {
+  const empty = document.createElement('p');
+  empty.className = 'status';
+  empty.textContent = 'Your cart is empty.';
+  $('cartItems').appendChild(empty);
+  $('cartTotal').textContent = '';
+  $('checkoutButton').disabled = true;
+  return;
+ }
 
-    $('cartTotal').textContent = '';
-    $('checkoutBtn').disabled = true;
-    return;
+ $('checkoutButton').disabled = false;
+ let total = 0;
+
+ cart.forEach((p,index) => {
+  const row = document.createElement('div');
+  row.className = 'cart-row';
+
+  const info = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = nameOf(p);
+
+  const sub = document.createElement('div');
+  sub.className = 'description';
+  sub.textContent = money(priceOf(p)) + ' × ' + p.quantity;
+
+  info.append(title,sub);
+
+  const controls = document.createElement('div');
+  controls.className = 'qty';
+
+  const minus = document.createElement('button');
+  minus.textContent = '−';
+  minus.addEventListener('click', () => changeQuantity(index,-1));
+
+  const number = document.createElement('span');
+  number.textContent = String(p.quantity);
+
+  const plus = document.createElement('button');
+  plus.textContent = '+';
+  plus.addEventListener('click', () => changeQuantity(index,1));
+
+  controls.append(minus,number,plus);
+  row.append(info,controls);
+  $('cartItems').appendChild(row);
+
+  if (priceOf(p) !== null && Number.isFinite(Number(priceOf(p)))) {
+   total += Number(priceOf(p)) * Number(p.quantity);
   }
+ });
 
-  $('checkoutBtn').disabled = false;
+ $('cartTotal').textContent = 'Total: ' + money(total);
+}
 
-  let total = 0;
+function changeQuantity(index,change) {
+ if (!cart[index]) return;
+ cart[index].quantity = Number(cart[index].quantity) + change;
 
-  cart.forEach((p, i) => {
-    const row = document.createElement('div');
-    row.className = 'cart-row';
+ if (cart[index].quantity <= 0) cart.splice(index,1);
 
-    const info = document.createElement('div');
-
-    const name = document.createElement('strong');
-    name.textContent = productName(p);
-
-    const sub = document.createElement('div');
-    sub.className = 'muted';
-
-    const pr = Number(productPrice(p));
-
-    sub.textContent =
-      (Number.isFinite(pr) ? money(pr) : 'Price unavailable') +
-      ' × ' + p.quantity;
-
-    info.append(name, sub);
-
-    const controls = document.createElement('div');
-    controls.className = 'qty';
-
-    for (const [label, delta] of [['−', -1], ['+', 1]]) {
-      const b = document.createElement('button');
-      b.textContent = label;
-      b.addEventListener('click', () => changeQty(i, delta));
-      controls.appendChild(b);
-    }
-
-    row.append(info, controls);
-    $('cartItems').appendChild(row);
-
-    if (Number.isFinite(pr)) {
-      total += pr * p.quantity;
-    }
-  });
-
-  $('cartTotal').textContent = 'Total: ' + money(total);
+ saveCart();
+ renderCart();
 }
 
 function showDetails(p) {
-  $('detailContent').replaceChildren();
+ $('detailContent').replaceChildren();
 
-  const src = imageUrl(p);
+ const src = imageOf(p);
+ if (src) {
+  const img = document.createElement('img');
+  img.className = 'detail-image';
+  img.src = src;
+  img.alt = nameOf(p);
+  $('detailContent').appendChild(img);
+ }
 
-  if (src) {
-    const img = document.createElement('img');
-    img.className = 'detail-img';
-    img.src = src;
-    img.alt = productName(p);
-    $('detailContent').appendChild(img);
-  }
+ const title = document.createElement('h3');
+ title.textContent = nameOf(p);
 
-  const h = document.createElement('h3');
-  h.textContent = productName(p);
+ const price = document.createElement('div');
+ price.className = 'price';
+ price.textContent = priceOf(p) === null ? 'Price unavailable' : money(priceOf(p));
 
-  const price = document.createElement('div');
-  price.className = 'price';
-  price.textContent =
-    productPrice(p) === null ? 'Price unavailable' : money(productPrice(p));
+ const description = document.createElement('p');
+ description.textContent = p.description || 'No description available.';
 
-  const desc = document.createElement('p');
-  desc.textContent =
-    String(p.description || 'Product details will be updated soon.');
+ const specs = document.createElement('p');
+ specs.textContent = p.specs ? 'Specifications: ' + p.specs : '';
 
-  $('detailContent').append(h, price, desc);
+ const returns = document.createElement('p');
+ returns.textContent = p.returnPolicy ? 'Return Policy: ' + p.returnPolicy : '';
 
-  const b = document.createElement('button');
-  b.className = 'btn btn-blue wide';
-  b.textContent = 'Add to Cart';
+ const add = document.createElement('button');
+ add.className = 'btn blue wide';
+ add.textContent = 'Add to Cart';
+ add.addEventListener('click', () => {
+  addToCart(p);
+  closePanel('detailOverlay');
+ });
 
-  b.addEventListener('click', () => {
-    addToCart(p);
-    closeOverlay('detailOverlay');
-  });
-
-  $('detailContent').appendChild(b);
-  openOverlay('detailOverlay');
+ $('detailContent').append(title,price,description,specs,returns,add);
+ openPanel('detailOverlay');
 }
 
 function checkout() {
-  if (!cart.length) return;
+ if (!cart.length) return;
 
-  const lines = cart.map((p, i) =>
-    `${i + 1}. ${productName(p)} × ${p.quantity} — ${
-      productPrice(p) === null
-        ? 'Price to confirm'
-        : money(Number(productPrice(p)) * p.quantity)
-    }`
-  );
+ const lines = cart.map((p,i) => {
+  const itemTotal = priceOf(p) === null
+   ? 'Price to confirm'
+   : money(Number(priceOf(p)) * Number(p.quantity));
 
-  const total = cart.reduce((s, p) =>
-    s + (
-      Number.isFinite(Number(productPrice(p)))
-        ? Number(productPrice(p)) * p.quantity
-        : 0
-    ), 0
-  );
+  return ${i+1}. ${nameOf(p)} | Qty: ${p.quantity} | ${itemTotal};
+ });
 
-  const msg =
-    'Hello VIKKA Store, I want to place an order:\n' +
-    lines.join('\n') +
-    '\nTotal (excluding items with unavailable price): ' +
-    money(total) +
-    '\nPlease confirm availability and delivery.';
+ const total = cart.reduce((sum,p) => {
+  const price = Number(priceOf(p));
+  return sum + (Number.isFinite(price) ? price * Number(p.quantity) : 0);
+ },0);
 
-  window.open(
-    'https://wa.me/' + WHATSAPP_NUMBER +
-    '?text=' + encodeURIComponent(msg),
-    '_blank',
-    'noopener'
-  );
+ const message =
+  'Hello VIKKA Store, I want to order:\n' +
+  lines.join('\n') +
+  '\nTotal: ' + money(total) +
+  '\nPlease confirm availability and delivery.';
+
+ window.open(
+  'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message),
+  '_blank'
+ );
 }
 
-function updateAccountUI() {
-  if (currentSession) {
-    $('accountBtn').textContent = 'My Account';
-    $('accountTitle').textContent = 'You are logged in';
-    $('accountMessage').textContent =
-      currentSession.user.email || 'Customer account';
+function updateAccount() {
+ if (currentSession) {
+  $('loginButton').textContent = 'My Account';
+  $('accountHeading').textContent = 'Customer Account';
+  $('accountMessage').textContent = currentSession.user.email;
+  $('accountForm').style.display = 'none';
+  $('toggleAccount').style.display = 'none';
+  $('logoutButton').style.display = 'block';
+ } else {
+  $('loginButton').textContent = 'Login';
+  $('accountHeading').textContent = authMode === 'login' ? 'Customer Login' : 'Create Account';
+  $('accountMessage').textContent = 'Use your email and password.';
+  $('accountForm').style.display = 'block';
+  $('toggleAccount').style.display = 'block';
+  $('toggleAccount').textContent = authMode === 'login' ? 'Create New Account' : 'Already registered? Login';
+  $('accountSubmit').textContent = authMode === 'login' ? 'Login' : 'Create Account';
+  $('logoutButton').style.display = 'none';
+ }
+}
 
-    $('accountForm').style.display = 'none';
-    $
+async function loadProducts() {
+ showStatus('Connecting to VIKKA Store...');
+
+ if (!window.supabase || !window.supabase.createClient) {
+  showStatus('Supabase library did not load. Please refresh the page.');
+  return;
+ }
+
+ try {
+  db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+  const result = await db
+   .from('products')
+   .select('*')
+   .order('created_at',{ascending:false});
+
+  if (result.error) throw result.error;
+
+  allProducts = Array.isArray(result.data) ? result.data : [];
+
+  buildCategories();
+  renderProducts();
+
+  const sessionResult = await db.auth.getSession();
+  if (sessionResult.error) throw sessionResult.error;
+
+  currentSession = sessionResult.data.session;
+  updateAccount();
+
+  db.auth.onAuthStateChange((_event,session) => {
+   currentSession = session;
+   updateAccount();
+  });
+
+ } catch (error) {
+  console.error('VIKKA Supabase error:',error);
+  showStatus('Products could not load: ' + (error.message || 'Check Supabase permissions and API key.'));
+ }
+}
+
+$('search').addEventListener('input',renderProducts);
+
+$('cartButton').addEventListener('click',() => {
+ renderCart();
+ openPanel('cartOverlay');
+});
+
+$('checkoutButton').addEventListener('click',checkout);
+
+$('loginButton').addEventListener('click',() => {
+ updateAccount();
+ openPanel('accountOverlay');
+});
+
+$('toggleAccount').addEventListener('click',() => {
+ authMode = authMode === 'login' ? 'signup' : 'login';
+ updateAccount();
+});
+
+$('accountForm').addEventListener('submit',async event => {
+ event.preventDefault();
+
+ if (!db) {
+  alert('Store connection is not ready.');
+  return;
+ }
+
+ const email = $('email').value.trim();
+ const password = $('password').value;
+
+ try {
+  const result = authMode === 'login'
+   ? await db.auth.signInWithPassword({email,password})
+   : await db.auth.signUp({email,password});
+
+  if (result.error) throw result.error;
+
+  currentSession = result.data.session;
+  updateAccount();
+
+  if (authMode === 'signup' && !currentSession) {
+   alert('Registration submitted. Please check your email for confirmation.');
+  } else {
+   alert('Login successful.');
+  }
+ } catch(error) {
+  alert(error.message || 'Account operation failed.');
+ }
+});
+
+$('logoutButton').addEventListener('click',async() => {
+ if (!db) return;
+
+ const {error} = await db.auth.signOut();
+
+ if (error) {
+  alert(error.message);
+  return;
+ }
+
+ currentSession = null;
+ authMode = 'login';
+ updateAccount();
+});
+
+$('year').textContent = new Date().getFullYear();
+
+try {
+ const saved = JSON.parse(localStorage.getItem('vikka_cart') || '[]');
+ if (Array.isArray(saved)) cart = saved;
+} catch {
+ cart = [];
+}
+saveCart();
+loadProducts();
+
+if ('serviceWorker' in navigator) {
+ window.addEventListener('load',() => {
+  navigator.serv
