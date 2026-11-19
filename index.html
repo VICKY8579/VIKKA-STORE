@@ -1,650 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#142b4a">
-<meta name="description" content="VIKKA Store - Your Online Shopping Partner">
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/vikka-logo.png">
-<title>VIKKA Store - Online Shopping</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#142b4a">
+  <title>VIKKA Store | Online Shopping</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; color: #222; background: #f6f7f9; }
+    header { background: #142b4a; color: white; padding: 18px 5%; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+    .logo { font-size: 28px; font-weight: bold; letter-spacing: 1px; }
+    .logo span { color: #ffbd45; }
+    .cart { background: #ffbd45; color: #142b4a; border: 0; padding: 11px 17px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .search-area { padding: 18px 5%; background: white; }
+    #search { width: 100%; max-width: 650px; display: block; margin: auto; padding: 13px; border: 1px solid #ccc; border-radius: 7px; font-size: 16px; }
+    .hero { margin: 22px 5%; padding: 35px 25px; border-radius: 12px; background: linear-gradient(120deg,#17395f,#2874a6); color: white; }
+    .hero h1 { margin: 0 0 10px; font-size: 30px; }
+    .hero p { margin: 0; font-size: 16px; }
+    main { padding: 5px 5% 40px; }
+    h2 { color: #142b4a; }
+    #categories { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 20px; }
+    .category { padding: 9px 15px; border: 1px solid #142b4a; border-radius: 20px; background: white; cursor: pointer; }
+    .category.active { background: #142b4a; color: white; }
+    #productGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 18px; }
+    .product-card { background: white; border-radius: 10px; padding: 13px; box-shadow: 0 2px 9px #00000012; min-width: 0; }
+    .product-card img { width: 100%; height: 175px; object-fit: contain; background: #f3f3f3; border-radius: 7px; }
+    .product-card h3 { font-size: 17px; margin: 12px 0 7px; overflow-wrap: anywhere; }
+    .product-card p { color: #555; font-size: 14px; }
+    .price { color: #087443; font-size: 19px; font-weight: bold; }
+    .mrp { color: #777; text-decoration: line-through; font-size: 13px; margin-left: 7px; }
+    .add-btn { width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 6px; background: #142b4a; color: white; cursor: pointer; }
+    .status { padding: 25px; background: white; border-radius: 8px; text-align: center; grid-column: 1 / -1; }
+    footer { background: #142b4a; color: white; text-align: center; padding: 22px; }
 
-<style>
-:root {
-  --navy:#142b4a;
-  --blue:#2874a6;
-  --orange:#ffbd45;
-  --bg:#f5f7fa;
-  --green:#087443;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#222}
-button,input{font:inherit}
-button{cursor:pointer}
-header{background:var(--navy);color:white;padding:12px 5%;position:sticky;top:0;z-index:10}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:10px;color:white;text-decoration:none}
-.logo img{width:48px;height:48px;object-fit:contain;background:white;border-radius:7px}
-.logo strong{font-size:24px}
-.logo span{color:var(--orange)}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:0;border-radius:7px;padding:11px 14px;font-weight:bold}
-.orange{background:var(--orange);color:var(--navy)}
-.white{background:white;color:var(--navy)}
-.blue{background:var(--navy);color:white}
-.outline{background:white;color:var(--navy);border:1px solid var(--navy)}
-.btn:disabled{opacity:.5}
-.search-area{background:white;padding:16px 5%}
-#search{width:100%;max-width:850px;display:block;margin:auto;padding:13px;border:1px solid #ccd2dc;border-radius:8px}
-.hero{margin:20px 5%;padding:32px 24px;border-radius:13px;background:linear-gradient(120deg,var(--navy),var(--blue));color:white;display:flex;justify-content:space-between;align-items:center;gap:15px}
-.hero h1{font-size:30px;margin:0 0 10px}
-.hero p{line-height:1.5;margin:0}
-.hero-icon{font-size:55px}
-main{padding:0 5% 40px}
-h2{color:var(--navy);margin:22px 0 12px}
-#categories{display:flex;gap:9px;flex-wrap:wrap}
-.category{border:1px solid var(--navy);background:white;color:var(--navy);padding:9px 15px;border-radius:22px}
-.category.active{background:var(--navy);color:white}
-#productGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
-.product-card{background:white;border-radius:10px;padding:12px;box-shadow:0 2px 9px #00000012;min-width:0}
-.product-card img{width:100%;height:165px;object-fit:contain;background:#f2f4f6;border-radius:7px}
-.product-card h3{font-size:16px;margin:10px 0 6px;overflow-wrap:anywhere}
-.description{font-size:13px;color:#666;line-height:1.5}
-.price{font-size:19px;font-weight:bold;color:var(--green)}
-.mrp{font-size:13px;color:#777;text-decoration:line-through;margin-left:7px}
-.card-buttons{display:flex;gap:6px;margin-top:10px}
-.card-buttons button{flex:1;padding:10px 5px;font-size:13px}
-.status{background:white;padding:25px;border-radius:9px;text-align:center;grid-column:1/-1;line-height:1.5}
-footer{background:var(--navy);color:white;text-align:center;padding:24px 5%;line-height:1.8}
-footer a{color:var(--orange);margin:0 8px;text-decoration:none}
-.overlay{display:none;position:fixed;inset:0;background:#0009;z-index:30;align-items:center;justify-content:center;padding:14px}
-.overlay.show{display:flex}
-.panel{background:white;border-radius:12px;width:min(550px,100%);max-height:90vh;overflow:auto;padding:20px}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.panel-head h2{margin:0}
-.close{border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:21px}
-.cart-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ddd}
-.qty{display:flex;align-items:center;gap:7px}
-.qty button{width:29px;height:29px;border:1px solid #ccc;background:white;border-radius:5px}
-.field{margin:13px 0}
-.field label{display:block;font-weight:bold;margin-bottom:6px}
-.field input{width:100%;padding:12px;border:1px solid #ccc;border-radius:7px}
-.wide{width:100%;margin-top:10px}
-.detail-image{width:100%;height:230px;object-fit:contain;background:#f2f4f6;border-radius:8px}
-.small{font-size:13px;color:#687385;line-height:1.5}
-@media(max-width:520px){
- .logo strong{font-size:21px}
- .logo img{width:42px;height:42px}
- .hero{padding:22px 17px}
- .hero h1{font-size:24px}
- .hero-icon{font-size:38px}
- #productGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
- .product-card{padding:9px}
- .product-card img{height:130px}
- .card-buttons{flex-direction:column}
- .actions .btn{padding:9px;font-size:13px}
-}
-</style>
+    @media(max-width:500px) {
+      .hero h1 { font-size: 24px; }
+      .logo { font-size: 24px; }
+      #productGrid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .product-card { padding: 9px; }
+    }
+  </style>
 </head>
 
 <body>
-<header>
- <div class="top">
-  <a class="logo" href="/">
-   <img src="/vikka-logo.png" alt="VIKKA Store">
-   <strong>VIKKA <span>STORE</span></strong>
-  </a>
-  <div class="actions">
-   <button class="btn white" id="loginButton">Login</button>
-   <button class="btn orange" id="cartButton">Cart (<span id="cartCount">0</span>)</button>
+  <header>
+    <div class="top">
+      <div class="logo">VIKKA<span> STORE</span></div>
+      <button class="cart" id="cartButton" type="button">
+        Cart (<span id="cartCount">0</span>)
+      </button>
+    </div>
+  </header>
+
+  <div class="search-area">
+    <input id="search" type="search"
+      placeholder="Search for products..." aria-label="Search products">
   </div>
- </div>
-</header>
-
-<div class="search-area">
- <input id="search" type="search" placeholder="Search products, brands and categories...">
-</div>
-
-<section class="hero">
- <div>
-  <h1>Welcome to VIKKA Store</h1>
-  <p>Your Online Shopping Partner.<br>Discover products at great prices.</p>
-  <button class="btn orange" onclick="document.getElementById('allProducts').scrollIntoView({behavior:'smooth'})">Shop Now</button>
- </div>
- <div class="hero-icon">🛍️</div>
-</section>
-
-<main>
- <h2>Shop by Category</h2>
- <div id="categories"></div>
- <h2 id="allProducts">All Products</h2>
- <div id="productGrid">
-  <div class="status">Connecting to VIKKA Store...</div>
- </div>
-</main>
-
-<footer>
- <strong>VIKKA STORE</strong><br>
- Your Online Shopping Partner
- <p>WhatsApp: +91 85799 70090</p>
- <p>
-  <a href="/seller.html">Become a Seller</a>
-  <a href="/admin.html">Admin Login</a>
-  <a href="https://wa.me/918579970090">Contact Us</a>
- </p>
- <small>© <span id="year"></span> VIKKA Store. All rights reserved.</small>
-</footer>
-
-<div class="overlay" id="cartOverlay">
- <div class="panel">
-  <div class="panel-head">
-   <h2>My Cart</h2>
-   <button class="close" data-close="cartOverlay">×</button>
-  </div>
-  <div id="cartItems"></div>
-  <h3 id="cartTotal"></h3>
-  <button class="btn orange wide" id="checkoutButton">Order on WhatsApp</button>
-  <p class="small">Please confirm product availability, delivery charges and final order amount with the store.</p>
- </div>
-</div>
-
-<div class="overlay" id="accountOverlay">
- <div class="panel">
-  <div class="panel-head">
-   <h2 id="accountHeading">Customer Login</h2>
-   <button class="close" data-close="accountOverlay">×</button>
-  </div>
-  <p id="accountMessage" class="small">Login to your VIKKA account.</p>
-  <form id="accountForm">
-   <div class="field">
-    <label for="email">Email</label>
-    <input id="email" type="email" required>
-   </div>
-   <div class="field">
-    <label for="password">Password</label>
-    <input id="password" type="password" minlength="6" required>
-   </div>
-   <button class="btn blue wide" id="accountSubmit" type="submit">Login</button>
-  </form>
-  <button class="btn outline wide" id="toggleAccount">Create New Account</button>
-  <button class="btn white wide" id="logoutButton" style="display:none">Logout</button>
- </div>
-</div>
-
-<div class="overlay" id="detailOverlay">
- <div class="panel">
-  <div class="panel-head">
-   <h2>Product Details</h2>
-   <button class="close" data-close="detailOverlay">×</button>
-  </div>
-  <div id="detailContent"></div>
- </div>
-</div>
-
-<script>
-'use strict';
-
-const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
-const WHATSAPP_NUMBER = '918579970090';
-
-let db = null;
-let allProducts = [];
-let cart = [];
-let selectedCategory = 'All';
-let authMode = 'login';
-let currentSession = null;
-
-const $ = id => document.getElementById(id);
-
-function money(value) {
- const n = Number(value);
- return Number.isFinite(n) ? '₹' + n.toLocaleString('en-IN') : 'Price unavailable';
-}
-
-function productName(p) {
- return String(p.name || p.title || p.product_name || 'Product');
-}
-
-function productPrice(p) {
- const value = p.price ?? p.selling_price;
- return value === null || value === undefined || value === '' ? null : value;
-}
-
-function productImage(p) {
- const value = p.image_url || p.image || p.photo || '';
- if (!value) return '';
- try {
-  const url = new URL(String(value), location.href);
-  return ['http:','https:'].includes(url.protocol) ? url.href : '';
- } catch {
-  return '';
- }
-}
-
-function openPanel(id) {
- $(id).classList.add('show');
-}
-
-function closePanel(id) {
- $(id).classList.remove('show');
-}
-
-document.querySelectorAll('[data-close]').forEach(button => {
- button.addEventListener('click', () => closePanel(button.dataset.close));
-});
-
-document.querySelectorAll('.overlay').forEach(panel => {
- panel.addEventListener('click', event => {
-  if (event.target === panel) closePanel(panel.id);
- });
-});
-
-function showStatus(message) {
- $('productGrid').replaceChildren();
- const div = document.createElement('div');
- div.className = 'status';
- div.textContent = message;
- $('productGrid').appendChild(div);
-}
-
-function buildCategories() {
- $('categories').replaceChildren();
-
- const names = ['All', ...new Set(
-  allProducts
-   .filter(p => p.is_active !== false)
-   .map(p => String(p.category || '').trim())
-   .filter(Boolean)
- )];
-
- names.forEach(name => {
-  const button = document.createElement('button');
-  button.className = 'category' + (selectedCategory === name ? ' active' : '');
-  button.textContent = name === 'All' ? 'All Products' : name;
-  button.addEventListener('click', () => {
-   selectedCategory = name;
-   buildCategories();
-   renderProducts();
-  });
-  $('categories').appendChild(button);
- });
-}
-
-function createCard(p) {
- const card = document.createElement('article');
- card.className = 'product-card';
-
- const src = productImage(p);
- if (src) {
-  const img = document.createElement('img');
-  img.src = src;
-  img.alt = productName(p);
-  img.loading = 'lazy';
-  img.onerror = () => img.remove();
-  card.appendChild(img);
- }
-
- const title = document.createElement('h3');
- title.textContent = productName(p);
- card.appendChild(title);
-
- if (p.brand) {
-  const brand = document.createElement('p');
-  brand.className = 'description';
-  brand.textContent = String(p.brand);
-  card.appendChild(brand);
- }
-
- const price = document.createElement('div');
- price.className = 'price';
- price.textContent = productPrice(p) === null ? 'Price unavailable' : money(productPrice(p));
-
- if (p.mrp && Number(p.mrp) > Number(p.price)) {
-  const mrp = document.createElement('span');
-  mrp.className = 'mrp';
-  mrp.textContent = money(p.mrp);
-  price.appendChild(mrp);
- }
- card.appendChild(price);
-
- if (p.description) {
-  const desc = document.createElement('p');
-  desc.className = 'description';
-  desc.textContent = String(p.description);
-  card.appendChild(desc);
- }
-
- const buttons = document.createElement('div');
- buttons.className = 'card-buttons';
-
- const details = document.createElement('button');
- details.className = 'btn outline';
- details.textContent = 'Details';
- details.addEventListener('click', () => showDetails(p));
-
- const add = document.createElement('button');
- add.className = 'btn blue';
- add.textContent = 'Add to Cart';
- add.addEventListener('click', () => addToCart(p));
-
- buttons.append(details, add);
- card.appendChild(buttons);
- return card;
-}
-
-function renderProducts() {
- const term = $('search').value.trim().toLowerCase();
-
- const filtered = allProducts.filter(p => {
-  if (p.is_active === false) return false;
-  const category = String(p.category || '');
-  const searchable = [
-   p.name || '', p.brand || '', p.category || '',
-   p.description || '', p.specs || ''
-  ].join(' ').toLowerCase();
-
-  return (selectedCategory === 'All' || category === selectedCategory)
-   && searchable.includes(term);
- });
-
- $('productGrid').replaceChildren();
-
- if (!filtered.length) {
-  showStatus(allProducts.length ? 'No matching products found.' : 'No products available yet.');
-  return;
- }
-
- filtered.forEach(p => $('productGrid').appendChild(createCard(p)));
-}
-
-function saveCart() {
- try {
-  localStorage.setItem('vikka_cart', JSON.stringify(cart));
- } catch (error) {
-  console.warn('Cart storage unavailable', error);
- }
- $('cartCount').textContent = String(
-  cart.reduce((sum,p) => sum + Number(p.quantity || 1),0)
- );
-}
-
-function addToCart(p) {
- const id = p.id ?? productName(p);
- const existing = cart.find(x => String(x.id ?? productName(x)) === String(id));
-
- if (existing) {
-  existing.quantity = Number(existing.quantity || 1) + 1;
- } else {
-  cart.push({...p, quantity:1});
- }
- saveCart();
- alert(productName(p) + ' added to cart.');
-}
-
-function changeQuantity(index,change) {
- if (!cart[index]) return;
- cart[index].quantity = Number(cart[index].quantity || 1) + change;
- if (cart[index].quantity <= 0) cart.splice(index,1);
- saveCart();
- renderCart();
-}
-
-function renderCart() {
- $('cartItems').replaceChildren();
-
- if (!cart.length) {
-  const empty = document.createElement('div');
-  empty.className = 'status';
-  empty.textContent = 'Your cart is empty.';
-  $('cartItems').appendChild(empty);
-  $('cartTotal').textContent = '';
-  $('checkoutButton').disabled = true;
-  return;
- }
-
- $('checkoutButton').disabled = false;
- let total = 0;
-
- cart.forEach((p,index) => {
-  const row = document.createElement('div');
-  row.className = 'cart-row';
-
-  const info = document.createElement('div');
-  const title = document.createElement('strong');
-  title.textContent = productName(p);
-
-  const sub = document.createElement('div');
-  sub.className = 'description';
-  sub.textContent = money(productPrice(p)) + ' × ' + p.quantity;
-  info.append(title,sub);
-
-  const controls = document.createElement('div');
-  controls.className = 'qty';
-
-  const minus = document.createElement('button');
-  minus.textContent = '−';
-  minus.addEventListener('click',() => changeQuantity(index,-1));
-
-  const count = document.createElement('span');
-  count.textContent = String(p.quantity);
-
-  const plus = document.createElement('button');
-  plus.textContent = '+';
-  plus.addEventListener('click',() => changeQuantity(index,1));
-
-  controls.append(minus,count,plus);
-  row.append(info,controls);
-  $('cartItems').appendChild(row);
-
-  const n = Number(productPrice(p));
-  if (Number.isFinite(n)) total += n * Number(p.quantity);
- });
-
- $('cartTotal').textContent = 'Total: ' + money(total);
-}
-
-function showDetails(p) {
- $('detailContent').replaceChildren();
-
- const src = productImage(p);
- if (src) {
-  const img = document.createElement('img');
-  img.className = 'detail-image';
-  img.src = src;
-  img.alt = productName(p);
-  $('detailContent').appendChild(img);
- }
-
- const title = document.createElement('h3');
- title.textContent = productName(p);
-
- const price = document.createElement('div');
- price.className = 'price';
- price.textContent = productPrice(p) === null ? 'Price unavailable' : money(productPrice(p));
-
- const description = document.createElement('p');
- description.textContent = p.description || 'No description available.';
-
- const specs = document.createElement('p');
- specs.textContent = p.specs ? 'Specifications: ' + p.specs : '';
-
- const returns = document.createElement('p');
- returns.textContent = p.returnPolicy ? 'Return Policy: ' + p.returnPolicy : '';
-
- const add = document.createElement('button');
- add.className = 'btn blue wide';
- add.textContent = 'Add to Cart';
- add.addEventListener('click',() => {
-  addToCart(p);
-  closePanel('detailOverlay');
- });
-
- $('detailContent').append(title,price,description,specs,returns,add);
- openPanel('detailOverlay');
-}
-
-function checkout() {
- if (!cart.length) return;
-
- const lines = cart.map((p,index) => {
-  const price = productPrice(p);
-  const subtotal = price === null
-   ? 'Price to confirm'
-   : money(Number(price) * Number(p.quantity));
-
-  return ${index+1}. ${productName(p)} | Qty: ${p.quantity} | ${subtotal};
- });
-
- const total = cart.reduce((sum,p) => {
-  const n = Number(productPrice(p));
-  return sum + (Number.isFinite(n) ? n * Number(p.quantity) : 0);
- },0);
-
- const message =
-  'Hello VIKKA Store, I want to order:\n' +
-  lines.join('\n') +
-  '\nTotal (excluding unavailable prices): ' + money(total) +
-  '\nPlease confirm availability and delivery.';
-
- window.open(
-  'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message),
-  '_blank'
- );
-}
-
-function updateAccountUI() {
- if (currentSession) {
-  $('loginButton').textContent = 'My Account';
-  $('accountHeading').textContent = 'Customer Account';
-  $('accountMessage').textContent = currentSession.user.email || '';
-  $('accountForm').style.display = 'none';
-  $('toggleAccount').style.display = 'none';
-  $('logoutButton').style.display = 'block';
- } else {
-  $('loginButton').textContent = 'Login';
-  $('accountHeading').textContent = authMode === 'login' ? 'Customer Login' : 'Create Account';
-  $('accountMessage').textContent = 'Use your email and password.';
-  $('accountForm').style.display = 'block';
-  $('toggleAccount').style.display = 'block';
-  $('toggleAccount').textContent = authMode === 'login' ? 'Create New Account' : 'Already registered? Login';
-  $('accountSubmit').textContent = authMode === 'login' ? 'Login' : 'Create Account';
-  $('logoutButton').style.display = 'none';
- }
-}
-
-async function loadProducts() {
- showStatus('Connecting to VIKKA Store...');
-
- if (!window.supabase || !window.supabase.createClient) {
-  showStatus('Supabase library did not load. Please refresh.');
-  return;
- }
-
- try {
-  db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-  const result = await db.from('products').select('*');
-
-  if (result.error) throw result.error;
-
-  allProducts = Array.isArray(result.data) ? result.data : [];
-
-  buildCategories();
-  renderProducts();
-
-  const sessionResult = await db.auth.getSession();
-  if (sessionResult.error) throw sessionResult.error;
-
-  currentSession = sessionResult.data.session;
-  updateAccountUI();
-
-  db.auth.onAuthStateChange((_event,session) => {
-   currentSession = session;
-   updateAccountUI();
-  });
-
- } catch(error) {
-  console.error('VIKKA Supabase error:',error);
-  showStatus('Products could not load: ' + (error.message || 'Check Supabase connection and permissions.'));
- }
-}
-
-$('search').addEventListener('input',renderProducts);
-
-$('cartButton').addEventListener('click',() => {
- renderCart();
- openPanel('cartOverlay');
-});
-
-$('checkoutButton').addEventListener('click',checkout);
-
-$('loginButton').addEventListener('click',() => {
- updateAccountUI();
- openPanel('accountOverlay');
-});
-
-$('toggleAccount').addEventListener('click',() => {
- authMode = authMode === 'login' ? 'signup' : 'login';
- updateAccountUI();
-});
-
-$('accountForm').addEventListener('submit',async event => {
- event.preventDefault();
- if (!db) {
-  alert('Store connection is not ready.');
-  return;
- }
-
- const email = $('email').value.trim();
- const password = $('password').value;
-
- try {
-  const result = authMode === 'login'
-   ? await db.auth.signInWithPassword({email,password})
-   : await db.auth.signUp({email,password});
-
-  if (result.error) throw result.error;
-
-  currentSession = result.data.session;
-  updateAccountUI();
-
-  if (authMode === 'signup' && !currentSession) {
-   alert('Registration submitted. Check your email to confirm.');
-  } else {
-   alert('Login successful.');
-  }
- } catch(error) {
-  alert(error.message || 'Account operation failed.');
- }
-});
-
-$('logoutButton').addEventListener('click',async() => {
- if (!db) return;
- const {error} = await db.auth.signOut();
-
- if (error) {
-  alert(error.message);
-  return;
- }
-
- currentSession = null;
- authMode = 'login';
- updateAccountUI();
-});
-
-$('year').textContent = new Date().getFullYear();
-
-try {
- const stored = JSON.parse(localStorage.getItem('vikka_cart') || '[]');
- if (Array.isArray(stored)) cart = stored;
-} catch {
- cart = [];
-}
-
-saveCart();
-loadProducts();
-
-if ('serviceWorker' in navigator) {
+
+  <section class="hero">
+    <h1>Welcome to VIKKA Store</h1>
+    <p>Discover great products at great prices.</p>
+  </section>
+
+  <main>
+    <h2>Shop by Category</h2>
+    <div id="categories"></div>
+
+    <h2>All Products</h2>
+    <div id="productGrid">
+      <div class="status">Loading products...</div>
+    </div>
+  </main>
+
+  <footer>
+    <strong>VIKKA STORE</strong>
+    <p>Online Shopping Made Easy</p>
+    <p>Contact us on WhatsApp: +91 85799 70090</p>
+  </footer>
+
+  <script>
+    'use strict';
+
+    const SUPABASE_URL = 'https://izjlpgpvrmvhcefxulhj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+    const WHATSAPP_NUMBER = '918579970090';
+
+    const productGrid = document.getElementById('productGrid');
+    const categoriesElement = document.getElementById('categories');
+    const searchInput = document.getElementById('search');
+    const cartCountElement = document.getElementById('cartCount');
+
+    let db = null;
+    let allProducts = [];
+    let visibleProducts = [];
+    let selectedCategory = 'All';
+    let cart = [];
+
+    function showStatus(message) {
+      productGrid.replaceChildren();
+
+      const box = document.createElement('div');
+      box.className = 'status';
+      box.textContent = message;
+
+      productGrid.appendChild(box);
+    }
+
+    function getProductName(product) {
+      return String(
+        product.name || product.title ||
+        product.product_name || 'Product'
+      );
+    }
+
+    function getProductPrice(product) {
+      const value = product.price ?? product.selling_price;
+
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      return value;
+    }
+
+    function getImageUrl(product) {
+      const value = product.image_url || product.image || product.photo || '';
+
+      if (!value) return '';
+
+      try {
+        const parsed = new URL(String(value), window.location.href);
+
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          return parsed.href;
+        }
+      } catch (error) {
+        console.warn('Invalid product image URL:', value);
+      }
+
+      return '';
+    }
+
+    function buildCategories() {
+      categoriesElement.replaceChildren();
+
+      const categoryNames = [...new Set(
+        allProducts
+          .map(product => String(product.category || '').trim())
+          .filter(Boolean)
+      )];
+
+      const names = ['All', ...categoryNames];
+
+      names.forEach(name => {
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = 'category' +
+          (name === selectedCategory ? ' active' : '');
+
+        button.textContent =
+          name === 'All' ? 'All Products' : name;
+
+        button.addEventListener('click', () => {
+          selectedCategory = name;
+          buildCategories();
+          renderProducts();
+        });
+
+        categoriesElement.appendChild(button);
+      });
+    }
+
+    function createProductCard(product, index) {
+      const card = document.createElement('article');
+      card.className = 'product-card';
+
+      const imageUrl = getImageUrl(product);
+
+      if (imageUrl) {
+        const image = document.createElement('img');
+
+        image.src = imageUrl;
+        image.alt = getProductName(product);
+        image.loading = 'lazy';
+
+        image.onerror = () => {
+          image.style.display = 'none';
+        };
+
+        card.appendChild(image);
+      }
+
+      const title = document.createElement('h3');
+      title.textContent = getProductName(product);
+      card.appendChild(title);
+
+      const descriptionText = String(product.description || '');
+
+      if (descriptionText) {
+        const description = document.createElement('p');
+        description.textContent = descriptionText;
+        card.appendChild(description);
+      }
+
+      const priceLine = document.createElement('div');
+      priceLine.className = 'price';
+
+      const price = getProductPrice(product);
+
+      priceLine.textContent =
+        price === null ? 'Price unavailable' : '₹' + price;
+
+      if (
+        product.mrp !== null &&
+        product.mrp !== undefined &&
+        product.mrp !== '' &&
+        Number(product.mrp) > Number(price)
+      ) {
+        const mrp = document.createElement('span');
+        mrp.className = 'mrp';
+        mrp.textContent = '₹' + product.mrp;
+        priceLine.appendChild(mrp);
+      }
+
+      card.appendChild(priceLine);
+
+      const addButton = document.createElement('button');
+      addButton.type = 'button';
+      addButton.className = 'add-btn';
+      addButton.textContent = 'Add to Cart';
+
+      addButton.addEventListener('click', () => {
+        addToCart(index);
+      });
+
+      card.appendChild(addButton);
+
+      return card;
+    }
+
+    function renderProducts() {
+      const term = searchInput.value.trim().toLowerCase();
+
+      const filtered = allProducts.filter(product => {
+        const name = getProductName(product).toLowerCase();
+        const description = String(
+          product.description || ''
+        ).toLowerCase();
+
+        const category = String(product.category || '');
+
+        const matchesCategory =
+          selectedCategory === 'All' ||
+          category === selectedCategory;
+
+        const matchesSearch =
+          name.includes(term) ||
+          description.includes(term) ||
+          category.toLowerCase().includes(term);
+
+        return matchesCategory && matchesSearch;
+      });
+
+      visibleProducts = filtered;
+      productGrid.replaceChildren();
+
+      if (filtered.length === 0) {
+        showStatus(
+          allProducts.length === 0
+            ? 'No products available yet.'
+            : 'No products found.'
+        );
+        return;
+      }
+
+      filtered.forEach((product, index) => {
+        productGrid.appendChild(
+          createProductCard(product, index)
+        );
+      });
+    }
+
+    function addToCart(index) {
+      const product = visibleProducts[index];
+
+      if (!product) return;
+
+      cart.push(product);
+      cartCountElement.textContent = String(cart.length);
+
+      alert(getProductName(product) + ' added to cart.');
+    }
+
+    function showCart() {
+      if (cart.length === 0) {
+        alert('Your cart is empty.');
+        return;
+      }
+
+      const lines = cart.map((product, index) => {
+        const price = getProductPrice(product);
+
+        return (
+          (index + 1) + '. ' +
+          getProductName(product) + ' - ' +
+          (price === null ? 'Price unavailable' : 'Rs. ' + price)
+        );
+      });
+
+      const total = cart.reduce((sum, product) => {
+        const price = Number(getProductPrice(product));
+
+        return sum + (
+          Number.isFinite(price) ? price : 0
+        );
+      }, 0);
+
+      const message =
+        'Hello VIKKA Store, I want to order:\n' +
+        lines.join('\n') +
+        '\nTotal: Rs. ' + total;
+
+      const whatsappUrl =
+        'https://wa.me/' + WHATSAPP_NUMBER +
+        '?text=' + encodeURIComponent(message);
+
+      window.open(
+        whatsappUrl,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    }
+
+    async function loadProducts() {
+      showStatus('Loading products...');
+
+      if (
+        !window.supabase ||
+        typeof window.supabase.createClient !== 'function'
+      ) {
+        showStatus(
+          'Store connection library could not load. Please refresh the page.'
+        );
+        return;
+      }
+
+      try {
+        db = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+
+        const result = await db
+          .from('products')
+          .select('*');
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        allProducts = Array.isArray(result.data)
+          ? result.data
+          : [];
+
+        buildCategories();
+        renderProducts();
+
+      } catch (error) {
+        console.error('Supabase product loading error:', error);
+
+        showStatus(
+          'Products could not be loaded. ' +
+          (error.message ||
+            'Please check the Supabase connection and table permissions.')
+        );
+      }
+    }
+
+    searchInput.addEventListener('input', renderProducts);
+
+    document
+      .getElementById('cartButton')
+      .addEventListener('click', showCart);
+
+    loadProducts();
+  </script>
+</body>
+</html>
