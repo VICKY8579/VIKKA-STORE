@@ -675,6 +675,132 @@ async function loadSellerProducts() {
 document.getElementById("refreshProducts")
   .addEventListener("click", loadSellerProducts);
 
+// VIKKA SELLER REGISTRATION APPROVAL
+const sellerCard = document.createElement("div");
+sellerCard.className = "card";
+sellerCard.innerHTML = `
+  <h2>Seller Registration Approval</h2>
+  <button id="refreshSellers">Refresh Sellers</button>
+  <p id="sellerStatus">Click Refresh Sellers.</p>
+  <div id="sellerList"></div>
+`;
+document.body.appendChild(sellerCard);
+
+document.getElementById("refreshSellers").onclick =
+async function () {
+  const status = document.getElementById("sellerStatus");
+  const list = document.getElementById("sellerList");
+
+  status.textContent = "Loading...";
+  list.innerHTML = "";
+
+  const { data: sellers, error } = await db
+    .from("seller_profiles")
+    .select("id,full_name,phone,status,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    status.textContent = error.message;
+    return;
+  }
+
+  status.textContent = "Total Sellers: " + sellers.length;
+
+  for (const seller of sellers) {
+    const { data: payments } = await db
+      .from("seller_upload_payments")
+      .select("id,amount,utr_number,status")
+      .eq("seller_id", seller.id)
+      .eq("payment_type", "registration");
+
+    const verified = (payments || []).some(
+      p => p.status === "verified"
+    );
+
+    const card = document.createElement("div");
+    card.style.cssText =
+      "border:1px solid #ccc;padding:15px;margin:10px 0;border-radius:8px";
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Name: " + seller.full_name +
+      " | Mobile: " + seller.phone +
+      " | Status: " + seller.status;
+
+    card.appendChild(details);
+
+    (payments || []).forEach(p => {
+      const info = document.createElement("p");
+      info.textContent =
+        "Registration Fee: ₹" + p.amount +
+        " | UTR: " + p.utr_number +
+        " | Payment: " + p.status;
+      card.appendChild(info);
+
+      if (p.status === "pending") {
+        const verify = document.createElement("button");
+        verify.textContent = "Verify Payment";
+        verify.onclick = async () => {
+          if (!confirm("Have you checked the actual UPI payment?")) return;
+
+          const { error } = await db
+            .from("seller_upload_payments")
+            .update({
+              status: "verified",
+              verified_at: new Date().toISOString()
+            })
+            .eq("id", p.id);
+
+          if (error) alert(error.message);
+          else {
+            alert("Payment verified.");
+            document.getElementById("refreshSellers").click();
+          }
+        };
+        card.appendChild(verify);
+      }
+    });
+
+    const approve = document.createElement("button");
+    approve.textContent = "Approve Seller";
+    approve.disabled = !verified || seller.status === "approved";
+    approve.onclick = async () => {
+      if (!confirm("Have you checked the seller documents and payment?")) return;
+
+      const { error } = await db
+        .from("seller_profiles")
+        .update({ status: "approved" })
+        .eq("id", seller.id);
+
+      if (error) alert(error.message);
+      else {
+        alert("Seller Approved");
+        document.getElementById("refreshSellers").click();
+      }
+    };
+    card.appendChild(approve);
+
+    const reject = document.createElement("button");
+    reject.textContent = "Reject Seller";
+    reject.onclick = async () => {
+      if (!confirm("Reject this seller?")) return;
+
+      const { error } = await db
+        .from("seller_profiles")
+        .update({ status: "rejected" })
+        .eq("id", seller.id);
+
+      if (error) alert(error.message);
+      else {
+        alert("Seller Rejected");
+        document.getElementById("refreshSellers").click();
+      }
+    };
+    card.appendChild(reject);
+
+    list.appendChild(card);
+  }
+};
 })();
 </script>
 </body>
