@@ -141,6 +141,39 @@ style="width:75px;height:75px;object-fit:contain;">
   <p class="muted">
    Product upload aur ₹20 payment system agle step mein connect hoga.
   </p>
+  <div id="productUploadForm" class="panel" style="display:none;margin-top:15px;">
+  <h2>Upload New Product</h2>
+
+  <label>Product Name</label>
+  <input id="productName" type="text" placeholder="Enter product name" required>
+
+  <label>Product Description</label>
+  <textarea id="productDescription" placeholder="Describe your product"></textarea>
+
+  <label>Category</label>
+  <select id="productCategory">
+    <option value="">Select Category</option>
+    <option>Clothing</option>
+    <option>Toys</option>
+    <option>Beauty</option>
+    <option>Kitchen</option>
+    <option>Home & Living</option>
+    <option>Electronics</option>
+    <option>Other</option>
+  </select>
+
+  <label>Selling Price (₹)</label>
+  <input id="productPrice" type="number" min="1" placeholder="Enter price">
+
+  <label>Available Stock</label>
+  <input id="productStock" type="number" min="1" placeholder="Enter quantity">
+
+  <label>Product Photo</label>
+  <input id="productImage" type="file" accept="image/*">
+
+  <button id="submitProduct" class="primary" type="button">Continue to Upload</button>
+  <div id="productMessage"></div>
+</div>
  </div>
 
  <div class="panel" style="margin-top:15px">
@@ -283,7 +316,9 @@ el("refresh").onclick=async()=>{
 };
 
 el("upload").onclick=()=>{
- alert("Product Upload feature agle step mein connect hoga.");
+  const form=el("productUploadForm");
+  form.style.display =
+    form.style.display==="none" ? "block" : "none";
 };
 
 // Save UPI ID and QR image in Supabase Storage
