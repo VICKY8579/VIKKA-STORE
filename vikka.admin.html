@@ -573,6 +573,108 @@ if(document.readyState === "loading"){
   initialize();
 }
 
+// VIKKA PRODUCT APPROVAL
+const productCard = document.createElement("div");
+productCard.className = "card";
+productCard.innerHTML = `
+  <h3>Seller Product Approval</h3>
+  <button id="refreshProducts">Refresh Products</button>
+  <p id="productStatus">Click Refresh Products to load products.</p>
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="productRows">
+        <tr><td colspan="5">No products loaded.</td></tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+$("dashboard").appendChild(productCard);
+
+async function loadSellerProducts() {
+  const statusBox = document.getElementById("productStatus");
+  const rows = document.getElementById("productRows");
+
+  statusBox.textContent = "Loading products...";
+
+  const { data, error } = await db
+    .from("seller_products")
+    .select("id,name,price,category,status")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    statusBox.textContent = "Error: " + error.message;
+    return;
+  }
+
+  rows.innerHTML = "";
+  statusBox.textContent = "Total products: " + data.length;
+
+  if (data.length === 0) {
+    rows.innerHTML =
+      '<tr><td colspan="5">No seller products found.</td></tr>';
+    return;
+  }
+
+  data.forEach(product => {
+    const tr = document.createElement("tr");
+
+    const name = document.createElement("td");
+    name.textContent = product.name || "";
+
+    const price = document.createElement("td");
+    price.textContent = "₹" + product.price;
+
+    const category = document.createElement("td");
+    category.textContent = product.category || "-";
+
+    const currentStatus = document.createElement("td");
+    currentStatus.textContent = product.status || "pending";
+
+    const action = document.createElement("td");
+
+    ["approved", "rejected"].forEach(newStatus => {
+      const button = document.createElement("button");
+      button.textContent =
+        newStatus === "approved" ? "Approve" : "Reject";
+
+      button.addEventListener("click", async () => {
+        if (!confirm("Confirm " + newStatus + " product?")) return;
+
+        const { error } = await db
+          .from("seller_products")
+          .update({ status: newStatus })
+          .eq("id", product.id);
+
+        if (error) {
+          alert("Update failed: " + error.message);
+          return;
+        }
+
+        alert("Product status updated.");
+        loadSellerProducts();
+      });
+
+      action.appendChild(button);
+    });
+
+    tr.append(name, price, category, currentStatus, action);
+    rows.appendChild(tr);
+  });
+}
+
+document.getElementById("refreshProducts")
+  .addEventListener("click", loadSellerProducts);
+
 })();
 </script>
 </body>
