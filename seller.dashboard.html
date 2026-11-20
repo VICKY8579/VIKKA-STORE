@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA STORE - Seller Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#f3f5fa;
+ color:#17233b;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:linear-gradient(120deg,#10234b,#173c78);
+ color:white;
+ padding:18px 5%;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+.brand{font-size:23px;font-weight:bold}
+.brand span{color:#e7b94e}
+main{max-width:1000px;margin:28px auto;padding:15px}
+.login,.panel,.tile{
+ background:white;
+ padding:20px;
+ border-radius:13px;
+ box-shadow:0 4px 18px #0000000c;
+}
+.login{max-width:430px;margin:50px auto}
+label{display:block;margin:14px 0 6px;font-weight:bold}
+input{
+ width:100%;
+ padding:12px;
+ border:1px solid #ccd3df;
+ border-radius:8px;
+ font-size:16px;
+}
+button{
+ border:0;
+ border-radius:8px;
+ padding:12px 17px;
+ font-weight:bold;
+ cursor:pointer;
+}
+.primary{background:#d92332;color:white}
+.secondary,.logout{background:#e9eef8;color:#10234b}
+.login button{width:100%;margin-top:18px}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+ gap:14px;
+ margin:18px 0;
+}
+.muted{color:#68748b}
+.number{font-size:28px;font-weight:bold;color:#173c78;margin-top:9px}
+.notice{
+ background:#fff7df;
+ border:1px solid #f0d58b;
+ padding:13px;
+ border-radius:9px;
+ margin:16px 0;
+}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.error{color:#bd1e2d;white-space:pre-wrap;margin-top:12px}
+.hidden{display:none!important}
+footer{text-align:center;color:#68748b;padding:25px}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="brand">VIKKA <span>STORE</span>
+ <small style="font-size:12px">SELLER PANEL</small></div>
+ <button id="logout" class="logout hidden">Logout</button>
+</header>
+
+<main>
+
+<section id="loginBox" class="login">
+ <h2>Seller Login</h2>
+ <p class="muted">Registered seller email aur password se login karein.</p>
+
+ <form id="loginForm">
+  <label>Email</label>
+  <input id="email" type="email" required>
+
+  <label>Password</label>
+  <input id="password" type="password" required>
+
+  <button class="primary">Login to Dashboard</button>
+ </form>
+
+ <div id="loginError" class="error"></div>
+</section>
+
+<section id="dashboard" class="hidden">
+
+ <h1>Seller Dashboard</h1>
+ <p>Welcome, <b id="sellerName">Seller</b></p>
+
+ <div id="notice" class="notice">Account loading...</div>
+
+ <div class="grid">
+
+  <div class="tile">
+   <span class="muted">Seller Status</span>
+   <div id="status" class="number">—</div>
+  </div>
+
+  <div class="tile">
+   <span class="muted">Total Products</span>
+   <div id="products" class="number">—</div>
+  </div>
+
+  <div class="tile">
+   <span class="muted">Payment Records</span>
+   <div id="payments" class="number">—</div>
+  </div>
+
+ </div>
+
+ <div class="panel">
+  <h2>Quick Actions</h2>
+
+  <div class="actions">
+   <button id="upload" class="primary">Upload Product</button>
+   <button id="refresh" class="secondary">Refresh</button>
+  </div>
+
+  <p class="muted">
+   Product upload aur ₹20 payment system agle step mein connect hoga.
+  </p>
+ </div>
+
+ <div class="panel" style="margin-top:15px">
+  <h2>Seller Payment Details</h2>
+
+  <label>UPI ID</label>
+  <input id="upi" type="text" placeholder="example@upi">
+
+  <label>QR Code Image</label>
+  <input id="qrFile" type="file" accept="image/*">
+
+  <button id="savePayment" class="primary" style="margin-top:15px">
+   Save Payment Details
+  </button>
+
+  <div id="paymentMessage" class="muted"></div>
+  <img id="qrPreview" style="max-width:180px;margin-top:12px;display:none">
+ </div>
+
+ <div class="panel" style="margin-top:15px">
+  <h2>Account Details</h2>
+  <p>Email: <span id="sellerEmail">—</span></p>
+  <p>Shop: <span id="shop">Not added</span></p>
+  <p>Address: <span id="address">Not added</span></p>
+ </div>
+
+ <div id="dashError" class="error"></div>
+
+</section>
+</main>
+
+<footer>VIKKA STORE • Shop • Sell • Grow</footer>
+
+<script>
+
+const SUPABASE_URL =
+"https://izjlpgpvrmvhcefxulhj.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+const el = id => document.getElementById(id);
+
+async function loadDashboard(user){
+
+ el("loginBox").classList.add("hidden");
+ el("dashboard").classList.remove("hidden");
+ el("logout").classList.remove("hidden");
+
+ el("sellerEmail").textContent = user.email || "—";
+ el("sellerName").textContent = user.email || "Seller";
+
+ const p = await db
+ .from("seller_profiles")
+ .select("*")
+ .eq("id",user.id)
+ .maybeSingle();
+
+ if(p.error){
+  el("notice").textContent="Profile load nahi hua.";
+  el("dashError").textContent=p.error.message;
+  el("status").textContent="Check";
+ }
+ else if(!p.data){
+  el("notice").textContent=
+  "Seller profile nahi mila. Pehle registration karein.";
+  el("status").textContent="Not registered";
+ }
+ else{
+  const s=p.data.status ||
+  (p.data.is_approved ? "Approved":"Pending");
+
+  el("status").textContent=s;
+  el("sellerName").textContent=
+  p.data.full_name || p.data.shop_name || user.email;
+
+  el("shop").textContent=p.data.shop_name || "Not added";
+  el("address").textContent=
+  p.data.business_address || "Not added";
+
+  el("upi").value=p.data.payment_upi_id || "";
+
+  el("notice").textContent=
+  "Seller account status: "+s;
+
+  if(p.data.payment_qr_url){
+   el("qrPreview").src=p.data.payment_qr_url;
+   el("qrPreview").style.display="block";
+  }
+ }
+
+ const a=await db
+ .from("seller_products")
+ .select("id",{count:"exact",head:true})
+ .eq("seller_id",user.id);
+
+ el("products").textContent=
+ a.error ? "—" : (a.count ?? 0);
+
+ const b=await db
+ .from("seller_upload_payments")
+ .select("id",{count:"exact",head:true})
+ .eq("seller_id",user.id);
+
+ el("payments").textContent=
+ b.error ? "—" : (b.count ?? 0);
+}
+
+el("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+
+ el("loginError").textContent="Login ho raha hai...";
+
+ const r=await db.auth.signInWithPassword({
+  email:el("email").value.trim(),
+  password:el("password").value
+ });
+
+ if(r.error){
+  el("loginError").textContent=r.error.message;
+  return;
+ }
+
+ await loadDashboard(r.data.user);
+});
+
+el("logout").onclick=async()=>{
+ await db.auth.signOut();
+ location.reload();
+};
+
+el("refresh").onclick=async()=>{
+ const r=await db.auth.getUser();
+ if(r.data.user) await loadDashboard(r.data.user);
+};
+
+el("upload").onclick=()=>{
+ alert("Product Upload feature agle step mein connect hoga.");
+};
+
+// Save UPI ID and QR image in Supabase Storage
+el("savePayment").onclick=async()=>{
+
+ el("paymentMessage").textContent="Saving...";
+
+ const userResult=await db.auth.getUser();
+ const user=userResult.data.user;
+
+ if(!user){
+  el("paymentMessage").textContent="Please login first.";
+  return;
+ }
+
+ let qrUrl=null;
+ const file=el("qrFile").files[0];
+
+ if(file){
+  const ext=file.name.split(".").pop().toLowerCase();
+  const path=user.id+"/payment-qr-"+Date.now()+"."+ext;
+
+  const upload=await db.storage
+   .from("seller-qr")
+   .upload(path,file,{upsert:true});
+
+  if(upload.error){
+   el("paymentMessage").textContent=
+   "QR upload error: "+upload.error.message+
+   ". Supabase mein seller-qr public bucket banana zaroori hai.";
+   return;
+  }
+
+  const publicResult=db.storage
+   .from("seller-qr")
+   .getPublicUrl(path);
+
+  qrUrl=publicResult.data.publicUrl;
+ }
+
+ const updateData={
+  payment_upi_id:el("upi").value.trim()
+ };
+
+ if(qrUrl) updateData.payment_qr_url=qrUrl;
+
+ const save=await db
+  .from("seller_profiles")
+  .update(updateData)
+  .eq("id",user.id);
+
+ if(save.error){
+  el("paymentMessage").textContent=save.error.message;
+  return;
+ }
+
+ el("paymentMessage").textContent="Payment details saved.";
+ if(qrUrl){
+  el("qrPreview").src=qrUrl;
+  el("qrPreview").style.display="block";
+ }
+};
+
+(async()=>{
+ const r=await db.auth.getSession();
+ if(r.data.session){
+  await loadDashboard(r.data.session.user);
+ }
+})();
+
+</script>
+</body>
+</html>
