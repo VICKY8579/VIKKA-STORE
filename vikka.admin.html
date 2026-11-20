@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIKKA Store - Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5f9;color:#202b3c;font-family:Arial,sans-serif}
+header{background:#172554;color:white;padding:18px}
+header h2{margin:0}
+.container{max-width:1200px;margin:22px auto;padding:12px}
+.card{background:white;padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 10px #00000010}
+input,select,button{padding:12px;border:1px solid #ccd3df;border-radius:7px;font-size:15px;margin:5px 3px;max-width:100%}
+input{min-width:200px}
+button{background:#1d4ed8;color:white;border:0;cursor:pointer}
+button:hover{background:#1e40af}
+.hidden{display:none}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:#eef2ff;padding:16px;border-radius:10px}
+.stat small{color:#475569}
+.stat h2{margin:8px 0}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}
+th{background:#eef2ff}
+.table-wrap{overflow-x:auto}
+#message{padding:10px;color:#b91c1c}
+.success{color:#15803d!important}
+.muted{color:#64748b;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>VIKKA STORE - ADMIN PANEL</h2>
+  <p>Orders, Customers & Sales Management</p>
+</header>
+
+<div class="container">
+
+<section class="card" id="loginBox">
+  <h3>Admin Login</h3>
+  <input id="email" type="email" placeholder="Admin Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p id="loginMessage"></p>
+</section>
+
+<section id="dashboard" class="hidden">
+
+  <div class="card">
+    <strong>Admin Dashboard</strong>
+    <button onclick="loadOrders()">Refresh Records</button>
+    <button onclick="logout()">Logout</button>
+    <p class="muted">Only authorized VIKKA administrators can access these records.</p>
+    <p id="message"></p>
+  </div>
+
+  <div class="card">
+    <h3>Order Period</h3>
+    <select id="period" onchange="loadOrders()">
+      <option value="today">Today</option>
+      <option value="3months" selected>Last 3 Months</option>
+      <option value="all">All Records</option>
+    </select>
+    <button onclick="loadOrders()">Search</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <small>Total Orders</small>
+      <h2 id="totalOrders">0</h2>
+    </div>
+    <div class="stat">
+      <small>Total Sales</small>
+      <h2 id="totalSales">₹0</h2>
+    </div>
+    <div class="stat">
+      <small>Products Sold (Quantity)</small>
+      <h2 id="totalQty">0</h2>
+    </div>
+    <div class="stat">
+      <small>Unique Customers</small>
+      <h2 id="totalCustomers">0</h2>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Customer Search & Order History</h3>
+    <input id="search" placeholder="Search name, mobile, address or product" oninput="renderOrders()">
+    <p class="muted">Search a customer to see their previous orders and delivery addresses.</p>
+  </div>
+
+  <div class="card">
+    <h3>Order Records</h3>
+    <button onclick="exportCSV()">Download CSV Report</button>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Order No.</th>
+            <th>Customer</th>
+            <th>Mobile</th>
+            <th>Address</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Amount</th>
+            <th>Source</th>
+            <th>Payment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="orderRows">
+          <tr><td colspan="11">No records loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Customer Order History</h3>
+    <div id="customerHistory" class="muted">Search by customer name or mobile number to view order history.</div>
+  </div>
+
+</section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
+const SUPABASE_KEY = "sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allOrders = [];
+
+function showMessage(message, success=false) {
+  const el = document.getElementById("message");
+  el.textContent = message;
+  el.className = success ? "success" : "";
+}
+
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const msg = document.getElementById("loginMessage");
+
+  if (!email || !password) {
+    msg.textContent = "Enter email and password.";
+    return;
+  }
+
+  msg.textContent = "Checking login...";
+
+  const {data, error} = await db.auth.signInWithPassword({
+    email, password
+  });
+
+  if (error) {
+    msg.textContent = error.message;
+    return;
+  }
+
+  const userId = data.user.id;
+
+  const {data: admin, error: adminError} = await db
+    .from("vikka_admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (adminError || !admin) {
+    await db.auth.signOut();
+    msg.textContent = "Access denied. This account is not an authorized VIKKA admin.";
+    return;
+  }
+
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  await loadOrders();
+}
+
+async function logout() {
+  await db.auth.signOut();
+  allOrders = [];
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("password").value = "";
+}
+
+async function loadOrders() {
+  showMessage("Loading order records...");
+
+  const period = document.getElementById("period").value;
+  let query = db.from("vikka_orders").select("*").order("created_at", {ascending:false});
+
+  if (period === "today") {
+    const start = new Date();
+    start.setHours(0,0,0,0);
+    const end = new Date();
+    end.setHours(23,59,59,999);
+    query = query.gte("created_at", start.toISOString())
+                 .lte("created_at", end.toISOString());
+  }
+
+  if (period === "3months") {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    query = query.gte("created_at", date.toISOString());
+  }
+
+  const {data, error} = await query.limit(2000);
+
+  if (error) {
+    allOrders = [];
+    renderOrders();
+    showMessage("Could not load orders: " + error.message);
+    return;
+  }
+
+  allOrders = data || [];
+  updateStats();
+  renderOrders();
+  showMessage("Records loaded successfully.", true);
+}
+
+function updateStats() {
+  const total = allOrders.length;
+  const sales = allOrders.reduce((sum,o)=>sum + Number(o.total_amount || 0),0);
+  const qty = allOrders.reduce((sum,o)=>sum + Number(o.quantity || 0),0);
+  const customers = new Set(allOrders.map(o=>
+    (o.customer_phone || o.customer_name || "").toLowerCase()
+  ));
+
+  document.getElementById("totalOrders").textContent = total;
+  document.getElementById("totalSales").textContent =
+    "₹" + sales.toLocaleString("en-IN");
+  document.getElementById("totalQty").textContent = qty;
+  document.getElementById("totalCustomers").textContent = customers.size;
+}
+
+function renderOrders() {
+  const term = document.getElementById("search").value.toLowerCase().trim();
+
+  const filtered = allOrders.filter(o => {
+    const text = [
+      o.customer_name, o.customer_phone, o.customer_address,
+      o.customer_city, o.product_name, o.order_number, o.order_source
+    ].join(" ").toLowerCase();
+    return text.includes(term);
+  });
+
+  const tbody = document.getElementById("orderRows");
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="11">No matching orders found.</td></tr>';
+  } else {
+    tbody.innerHTML = filtered.map(o => `
+      <tr>
+        <td>${safeDate(o.created_at)}</td>
+        <td>${esc(o.order_number || "-")}</td>
+        <td>${esc(o.customer_name)}</td>
+        <td>${esc(o.customer_phone)}</td>
+        <td>${esc([o.customer_address,o.customer_city].filter(Boolean).join(", "))}</td>
+        <td>${esc(o.product_name)}</td>
+        <td>${Number(o.quantity || 0)}</td>
+        <td>₹${Number(o.total_amount || 0).toLocaleString("en-IN")}</td>
+        <td>${esc(o.order_source || "Unknown")}</td>
+        <td>${esc(o.payment_status || "Pending")}</td>
+        <td>${esc(o.order_status || "New")}</td>
+      </tr>
+    `).join("");
+  }
+
+  renderCustomerHistory(filtered, term);
+}
+
+function renderCustomerHistory(filtered, term) {
+  const box = document.getElementById("customerHistory");
+
+  if (!term) {
+    box.textContent = "Search by customer name or mobile number to view order history.";
+    return;
+  }
+
+  if (!filtered.length) {
+    box.textContent = "No customer history found.";
+    return;
+  }
+
+  const customer = filtered[0];
+  const sameCustomer = allOrders.filter(o =>
+    (customer.customer_phone && o.customer_phone === customer.customer_phone) ||
+    (!customer.customer_phone && o.customer_name === customer.customer_name)
+  );
+
+  box.innerHTML = `
+    <h4>${esc(customer.customer_name || "Customer")}</h4>
+    <p>Mobile: ${esc(customer.customer_phone || "-")}</p>
+    <p>Address: ${esc(customer.customer_address || "-")}, ${esc(customer.customer_city || "")}</p>
+    <p>Total Orders: ${sameCustomer.length}</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          ${sameCustomer.map(o=>`
+            <tr>
+              <td>${safeDate(o.created_at)}</td>
+              <td>${esc(o.product_name)}</td>
+              <td>${Number(o.quantity || 0)}</td>
+              <td>₹${Number(o.total_amount || 0).toLocaleString("en-IN")}</td>
+              <td>${esc(o.order_status || "New")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function safeDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("en-IN");
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[ch]);
+}
+
+function exportCSV() {
+  if (!allOrders.length) {
+    alert("No records to export.");
+    return;
+  }
+
+  const headers = [
+    "Date","Order Number","Customer","Mobile","Address","City",
+    "Product","Quantity","Amount","Source","Payment Status","Order Status"
+  ];
+
+  const rows = allOrders.map(o => [
+    o.created_at, o.order_number, o.customer_name, o.customer_phone,
+    o.customer_address, o.customer_city, o.product_name, o.quantity,
+    o.total_amount, o.order_source, o.payment_status, o.order_status
+  ]);
+
+  const csv = [headers,...rows].map(row =>
+    row.map(value => "${String(value ?? "").replace(/"/g,'""')}").join(",")
+  ).join("\r\n");
+
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "vikka-orders-report.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+db.auth.getSession().then(({data}) => {
+  if (data.session) {
+    document.getElementById("email").value =
+      data.session.user.email || "";
+  }
+});
+</script>
+</body>
+</html>
