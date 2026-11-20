@@ -1,4 +1,3 @@
-<!-- seller.dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,21 +10,22 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#222}
 header{background:#172554;color:white;padding:18px;display:flex;justify-content:space-between;align-items:center}
-header h2{margin:0}
+header h2{margin:0;font-size:20px}
 main{max-width:1100px;margin:20px auto;padding:12px}
 .card{background:white;padding:20px;margin-bottom:18px;border-radius:12px;box-shadow:0 2px 9px #0001}
 h3{margin-top:0;color:#172554}
-input,textarea,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccc;border-radius:7px;font-size:15px}
+input,textarea{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccc;border-radius:7px;font-size:15px}
 button{border:0;padding:12px 18px;border-radius:7px;background:#1d4ed8;color:white;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.5}
+button:disabled{opacity:.5;cursor:not-allowed}
 .logout{background:#dc2626}
-.green{color:green}.red{color:#dc2626}.muted{color:#666;font-size:13px}
+.green{color:green}
+.red{color:#dc2626}
+.muted{color:#666;font-size:13px}
 table{width:100%;border-collapse:collapse;min-width:600px}
 th,td{padding:11px;border-bottom:1px solid #ddd;text-align:left}
 .table-wrap{overflow-x:auto}
 .status{font-weight:bold}
 #dashboard{display:none}
-#message{padding:10px;margin:10px 0;border-radius:7px}
 img.preview{max-width:130px;max-height:130px;display:block;margin:8px 0}
 </style>
 </head>
@@ -33,471 +33,580 @@ img.preview{max-width:130px;max-height:130px;display:block;margin:8px 0}
 <body>
 
 <header>
-  <h2>VIKKA STORE | Seller Panel</h2>
-  <button class="logout" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
+<h2>VIKKA STORE | Seller Panel</h2>
+<button class="logout" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
 </header>
 
 <main>
 
 <div class="card" id="loginBox">
-  <h3>Seller Login</h3>
-  <input type="email" id="loginEmail" placeholder="Email Address">
-  <input type="password" id="loginPassword" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p id="loginMessage" class="muted"></p>
+<h3>Seller Login</h3>
+<label>Email Address</label>
+<input type="email" id="loginEmail" placeholder="Email Address">
+<label>Password</label>
+<input type="password" id="loginPassword" placeholder="Password">
+<button id="loginBtn" onclick="login()">Login</button>
+<p id="loginMessage" class="muted"></p>
 </div>
 
 <div id="dashboard">
 
-  <div class="card">
-    <h3>Seller Profile</h3>
-    <p><b>Name:</b> <span id="sellerName">-</span></p>
-    <p><b>Shop:</b> <span id="shopName">-</span></p>
-    <p><b>Account Status:</b> <span id="sellerStatus">-</span></p>
-    <p><b>VIKKA Commission:</b> 0%</p>
-  </div>
+<div class="card">
+<h3>Seller Profile</h3>
+<p><b>Name:</b> <span id="sellerName">-</span></p>
+<p><b>Shop:</b> <span id="shopName">-</span></p>
+<p><b>Account Status:</b> <span id="sellerStatus">-</span></p>
+<p><b>VIKKA Commission:</b> 0%</p>
+</div>
 
-  <div class="card">
-    <h3>My Customer Payment Details</h3>
-    <p class="muted">Customers will use these details to pay you for products.</p>
+<div class="card">
+<h3>My Customer Payment Details</h3>
+<p class="muted">Customers will use these details to pay you for products.</p>
+<label>Your UPI ID</label>
+<input id="sellerUpi" placeholder="example@upi">
+<label>Your UPI QR Code</label>
+<input type="file" id="qrFile" accept="image/*">
+<img id="qrPreview" class="preview" style="display:none">
+<button onclick="savePaymentDetails()">Save Payment Details</button>
+<p id="qrMessage" class="muted"></p>
+</div>
 
-    <label>Your UPI ID</label>
-    <input id="sellerUpi" placeholder="example@upi">
+<div class="card">
+<h3>Upload New Product</h3>
+<p><b>Upload Fee:</b> ₹20 per new product listing</p>
+<p><b>Initial Stock:</b> Minimum 10 units</p>
+<p><b>VIKKA UPI:</b> beingbimalvicky@ybl</p>
+<p class="muted">Pay ₹20 to VIKKA and enter the UTR / Transaction ID below. Your product will be reviewed after payment verification.</p>
 
-    <label>Your UPI QR Code</label>
-    <input type="file" id="qrFile" accept="image/*">
-    <img id="qrPreview" class="preview" style="display:none">
+<form id="productForm">
+<label>Product Name</label>
+<input id="productName" required maxlength="100">
 
-    <button onclick="savePaymentDetails()">Save Payment Details</button>
-    <p id="qrMessage" class="muted"></p>
-  </div>
+<label>Description</label>
+<textarea id="productDescription" rows="3" required></textarea>
 
-  <div class="card">
-    <h3>Upload New Product</h3>
-    <p><b>Upload Fee:</b> ₹20 per new product listing</p>
-    <p><b>Initial Stock:</b> Minimum 10 units</p>
-    <p><b>VIKKA UPI:</b> beingbimalvicky@ybl</p>
-    <p class="muted">Pay ₹20 to VIKKA and enter the UTR / Transaction ID below. Your product will be reviewed after payment verification.</p>
+<label>Category</label>
+<input id="productCategory" required placeholder="Example: Toys, Clothing, Kitchen">
 
-    <form id="productForm">
-      <label>Product Name</label>
-      <input id="productName" required maxlength="100">
+<label>Price (₹)</label>
+<input id="productPrice" type="number" min="1" step="0.01" required>
 
-      <label>Description</label>
-      <textarea id="productDescription" rows="3" required></textarea>
+<label>Initial Stock (Minimum 10)</label>
+<input id="productStock" type="number" min="10" step="1" value="10" required>
 
-      <label>Category</label>
-      <input id="productCategory" required placeholder="Example: Toys, Clothing, Kitchen">
+<label>Product Image</label>
+<input id="productImage" type="file" accept="image/*" required>
 
-      <label>Price (₹)</label>
-      <input id="productPrice" type="number" min="1" step="0.01" required>
+<label>₹20 Payment UTR / Transaction ID</label>
+<input id="utrNumber" required placeholder="Enter transaction number">
 
-      <label>Initial Stock (Minimum 10)</label>
-      <input id="productStock" type="number" min="10" step="1" value="10" required>
+<button type="submit" id="uploadBtn">Submit Product</button>
+</form>
+<p id="uploadMessage" class="muted"></p>
+</div>
 
-      <label>Product Image</label>
-      <input id="productImage" type="file" accept="image/*" required>
+<div class="card">
+<h3>My Products</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Price</th>
+<th>Stock</th>
+<th>Product Status</th>
+<th>Payment Status</th>
+</tr>
+</thead>
+<tbody id="productsTable">
+<tr><td colspan="5">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 
-      <label>₹20 Payment UTR / Transaction ID</label>
-      <input id="utrNumber" required placeholder="Enter transaction number">
-
-      <button type="submit" id="uploadBtn">Submit Product</button>
-    </form>
-    <p id="uploadMessage" class="muted"></p>
-  </div>
-
-  <div class="card">
-    <h3>My Products</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Product Status</th>
-            <th>Payment Status</th>
-          </tr>
-        </thead>
-        <tbody id="productsTable">
-          <tr><td colspan="5">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>My VIKKA Upload Payments</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Products</th>
-            <th>Amount</th>
-            <th>UTR Number</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="paymentsTable">
-          <tr><td colspan="5">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+<div class="card">
+<h3>My VIKKA Upload Payments</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Products</th>
+<th>Amount</th>
+<th>UTR Number</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="paymentsTable">
+<tr><td colspan="5">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 
 </div>
 </main>
 
 <script>
+"use strict";
+
 const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
 const SUPABASE_KEY = "sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+let db = null;
 let currentUser = null;
 let sellerProfile = null;
 
-function showMessage(id, message, success=false){
-  const el = document.getElementById(id);
-  el.textContent = message;
-  el.className = success ? "green" : "red";
-}
-
-async function login(){
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
-
-  if(!email || !password){
-    showMessage("loginMessage","Enter email and password.");
-    return;
-  }
-
-  showMessage("loginMessage","Signing in...",true);
-
-  const {data,error} = await db.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    showMessage("loginMessage",error.message);
-    return;
-  }
-
-  await loadDashboard(data.user);
-}
-
-async function logout(){
-  await db.auth.signOut();
-  currentUser = null;
-  sellerProfile = null;
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("loginBox").style.display="block";
-  document.getElementById("logoutBtn").style.display="none";
-}
-
-async function loadDashboard(user){
-  currentUser = user;
-
-  const {data:profile,error} = await db
-    .from("seller_profiles")
-    .select("id,full_name,shop_name,status,business_address,payment_upi_id,payment_qr_url")
-    .eq("id",user.id)
-    .single();
-
-  if(error || !profile){
-    alert("Seller profile not found. Please contact VIKKA Admin.");
-    await db.auth.signOut();
-    return;
-  }
-
-  sellerProfile = profile;
-
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  document.getElementById("logoutBtn").style.display="block";
-
-  document.getElementById("sellerName").textContent=profile.full_name || "-";
-  document.getElementById("shopName").textContent=profile.shop_name || "-";
-  document.getElementById("sellerStatus").textContent=profile.status || "-";
-  document.getElementById("sellerUpi").value=profile.payment_upi_id || "";
-
-  if(profile.payment_qr_url){
-    document.getElementById("qrPreview").src=profile.payment_qr_url;
-    document.getElementById("qrPreview").style.display="block";
-  }
-
-  await loadProducts();
-  await loadPayments();
-}
-
-async function savePaymentDetails(){
-  if(!currentUser || !sellerProfile) return;
-
-  const upi = document.getElementById("sellerUpi").value.trim();
-  const file = document.getElementById("qrFile").files[0];
-
-  if(!upi){
-    showMessage("qrMessage","Please enter your UPI ID.");
-    return;
-  }
-
-  let qrUrl = sellerProfile.payment_qr_url || null;
-
-  if(file){
-    const ext = file.name.split(".").pop().toLowerCase();
-    const path = currentUser.id + "/payment-qr-" + Date.now() + "." + ext;
-
-    const {error:uploadError} = await db.storage
-      .from("seller-qr")
-      .upload(path,file,{upsert:false});
-
-    if(uploadError){
-      showMessage("qrMessage","QR upload failed: "+uploadError.message);
-      return;
-    }
-
-    const {data:urlData} = db.storage
-      .from("seller-qr")
-      .getPublicUrl(path);
-
-    qrUrl = urlData.publicUrl;
-  }
-
-  const {error} = await db
-    .from("seller_profiles")
-    .update({
-      payment_upi_id:upi,
-      payment_qr_url:qrUrl
-    })
-    .eq("id",sellerProfile.id);
-
-  if(error){
-    showMessage("qrMessage","Save failed: "+error.message);
-    return;
-  }
-
-  sellerProfile.payment_upi_id=upi;
-  sellerProfile.payment_qr_url=qrUrl;
-
-  if(qrUrl){
-    document.getElementById("qrPreview").src=qrUrl;
-    document.getElementById("qrPreview").style.display="block";
-  }
-
-  showMessage("qrMessage","Payment details saved successfully.",true);
-}
-
-document.getElementById("qrFile").addEventListener("change",function(){
-  const file=this.files[0];
-  if(file){
-    document.getElementById("qrPreview").src=URL.createObjectURL(file);
-    document.getElementById("qrPreview").style.display="block";
-  }
-});
-
-document.getElementById("productForm").addEventListener("submit",async function(e){
-  e.preventDefault();
-
-  if(!currentUser || !sellerProfile) return;
-
-  if(String(sellerProfile.status).toLowerCase() !== "approved"){
-    showMessage("uploadMessage","Your seller account is not approved yet.");
-    return;
-  }
-
-  const name=document.getElementById("productName").value.trim();
-  const description=document.getElementById("productDescription").value.trim();
-  const category=document.getElementById("productCategory").value.trim();
-  const price=Number(document.getElementById("productPrice").value);
-  const stock=Number(document.getElementById("productStock").value);
-  const utr=document.getElementById("utrNumber").value.trim();
-  const imageFile=document.getElementById("productImage").files[0];
-
-  if(!name || !description || !category || !imageFile || !utr){
-    showMessage("uploadMessage","Please complete all fields.");
-    return;
-  }
-
-  if(!Number.isFinite(price) || price<=0){
-    showMessage("uploadMessage","Enter a valid product price.");
-    return;
-  }
-
-  if(!Number.isInteger(stock) || stock<10){
-    showMessage("uploadMessage","Initial stock must be at least 10.");
-    return;
-  }
-
-  if(utr.length<6){
-    showMessage("uploadMessage","Please enter a valid UTR / transaction number.");
-    return;
-  }
-
-  const button=document.getElementById("uploadBtn");
-  button.disabled=true;
-  button.textContent="Submitting...";
-
-  try{
-    const imageExt=imageFile.name.split(".").pop().toLowerCase();
-    const imagePath=${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${imageExt};
-
-    const {error:imageError}=await db.storage
-      .from("images")
-      .upload(imagePath,imageFile,{upsert:false});
-
-    if(imageError) throw new Error("Product image upload failed: "+imageError.message);
-
-    const {data:imageData}=db.storage
-      .from("images")
-      .getPublicUrl(imagePath);
-
-    const {data:payment,error:paymentError}=await db
-      .from("seller_upload_payments")
-      .insert({
-        seller_id:currentUser.id,
-        amount:20,
-        upi_id:"beingbimalvicky@ybl",
-        utr_number:utr,
-        status:"pending",
-        payment_type:"product_upload",
-        product_count:1,
-        approved_count:0
-      })
-      .select("id")
-      .single();
-
-    if(paymentError) throw new Error("Payment record failed: "+paymentError.message);
-
-    const {error:productError}=await db
-      .from("seller_products")
-      .insert({
-        seller_id:sellerProfile.id,
-        name:name,
-        description:description,
-        price:price,
-        image_url:imageData.publicUrl,
-        category:category,
-        stock:stock,
-        status:"pending",
-        upload_payment_id:payment.id
-      });
-
-    if(productError){
-      throw new Error("Product save failed. Please contact Admin with your UTR: "+utr+". Details: "+productError.message);
-    }
-
-    showMessage("uploadMessage","Product submitted. Payment verification and product approval are pending.",true);
-    document.getElementById("productForm").reset();
-    document.getElementById("productStock").value=10;
-
-    await loadProducts();
-    await loadPayments();
-
-  }catch(error){
-    showMessage("uploadMessage",error.message);
-  }finally{
-    button.disabled=false;
-    button.textContent="Submit Product";
-  }
-});
-
-async function loadProducts(){
-  const tbody=document.getElementById("productsTable");
-  tbody.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
-
-  const {data:products,error}=await db
-    .from("seller_products")
-    .select("id,name,price,stock,status,upload_payment_id")
-    .eq("seller_id",sellerProfile.id)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    tbody.innerHTML=<tr><td colspan="5">Error: ${escapeHtml(error.message)}</td></tr>;
-    return;
-  }
-
-  if(!products || products.length===0){
-    tbody.innerHTML="<tr><td colspan='5'>No products uploaded yet.</td></tr>";
-    return;
-  }
-
-  const paymentIds=[...new Set(products.map(p=>p.upload_payment_id).filter(Boolean))];
-  let paymentMap={};
-
-  if(paymentIds.length){
-    const {data:payments}=await db
-      .from("seller_upload_payments")
-      .select("id,status")
-      .in("id",paymentIds);
-
-    (payments || []).forEach(p=>paymentMap[p.id]=p.status);
-  }
-
-  tbody.innerHTML=products.map(p=>`
-    <tr>
-      <td>${escapeHtml(p.name)}</td>
-      <td>₹${Number(p.price).toFixed(2)}</td>
-      <td>${p.stock}</td>
-      <td class="status">${escapeHtml(p.status || "pending")}</td>
-      <td class="status">${escapeHtml(paymentMap[p.upload_payment_id] || "pending")}</td>
-    </tr>
-  `).join("");
-}
-
-async function loadPayments(){
-  const tbody=document.getElementById("paymentsTable");
-  tbody.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
-
-  const {data:payments,error}=await db
-    .from("seller_upload_payments")
-    .select("id,amount,product_count,utr_number,status,created_at,payment_type")
-    .eq("seller_id",currentUser.id)
-    .eq("payment_type","product_upload")
-    .order("created_at",{ascending:false});
-
-  if(error){
-    tbody.innerHTML=<tr><td colspan="5">Error: ${escapeHtml(error.message)}</td></tr>;
-    return;
-  }
-
-  if(!payments || payments.length===0){
-    tbody.innerHTML="<tr><td colspan='5'>No product upload payments yet.</td></tr>";
-    return;
-  }
-
-  tbody.innerHTML=payments.map(p=>`
-    <tr>
-      <td>${p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN") : "-"}</td>
-      <td>${p.product_count}</td>
-      <td>₹${p.amount}</td>
-      <td>${escapeHtml(p.utr_number || "-")}</td>
-      <td class="status">${escapeHtml(p.status || "pending")}</td>
-    </tr>
-  `).join("");
+function showMessage(id,message,success=false){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.textContent = message;
+    el.className = success ? "green" : "red";
 }
 
 function escapeHtml(value){
-  return String(value ?? "").replace(/[&<>"']/g,function(ch){
-    return {
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-    }[ch];
-  });
+    return String(value ?? "").replace(/[&<>"']/g,function(ch){
+        return {
+            "&":"&amp;",
+            "<":"&lt;",
+            ">":"&gt;",
+            '"':"&quot;",
+            "'":"&#039;"
+        }[ch];
+    });
+}
+
+async function login(){
+    if(!db){
+        showMessage("loginMessage","Supabase connection is not available.");
+        return;
+    }
+
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const button = document.getElementById("loginBtn");
+
+    if(!email || !password){
+        showMessage("loginMessage","Enter email and password.");
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    showMessage("loginMessage","Please wait...",true);
+
+    try{
+        const result = await db.auth.signInWithPassword({
+            email:email,
+            password:password
+        });
+
+        if(result.error) throw result.error;
+
+        await loadDashboard(result.data.user);
+
+    }catch(error){
+        showMessage("loginMessage","Login failed: " + error.message);
+    }finally{
+        button.disabled = false;
+        button.textContent = "Login";
+    }
+}
+
+async function logout(){
+    if(!db) return;
+
+    const result = await db.auth.signOut();
+
+    if(result.error){
+        alert("Logout error: " + result.error.message);
+        return;
+    }
+
+    currentUser = null;
+    sellerProfile = null;
+
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("logoutBtn").style.display = "none";
+    document.getElementById("loginPassword").value = "";
+
+    showMessage("loginMessage","Logged out successfully.",true);
+}
+
+async function loadDashboard(user){
+    currentUser = user;
+
+    try{
+        const result = await db
+            .from("seller_profiles")
+            .select("id,full_name,shop_name,status,business_address,payment_upi_id,payment_qr_url")
+            .eq("id",user.id)
+            .single();
+
+        if(result.error) throw result.error;
+
+        if(!result.data){
+            throw new Error("Seller profile not found.");
+        }
+
+        sellerProfile = result.data;
+
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        document.getElementById("logoutBtn").style.display = "block";
+
+        document.getElementById("sellerName").textContent = sellerProfile.full_name || "-";
+        document.getElementById("shopName").textContent = sellerProfile.shop_name || "-";
+        document.getElementById("sellerStatus").textContent = sellerProfile.status || "-";
+        document.getElementById("sellerUpi").value = sellerProfile.payment_upi_id || "";
+
+        if(sellerProfile.payment_qr_url){
+            document.getElementById("qrPreview").src = sellerProfile.payment_qr_url;
+            document.getElementById("qrPreview").style.display = "block";
+        }
+
+        await loadProducts();
+        await loadPayments();
+
+    }catch(error){
+        showMessage("loginMessage","Dashboard error: " + error.message);
+
+        await db.auth.signOut();
+
+        currentUser = null;
+        sellerProfile = null;
+
+        document.getElementById("dashboard").style.display = "none";
+        document.getElementById("loginBox").style.display = "block";
+        document.getElementById("logoutBtn").style.display = "none";
+    }
+}
+
+async function savePaymentDetails(){
+    if(!currentUser || !sellerProfile) return;
+
+    const upi = document.getElementById("sellerUpi").value.trim();
+    const file = document.getElementById("qrFile").files[0];
+
+    if(!upi){
+        showMessage("qrMessage","Please enter your UPI ID.");
+        return;
+    }
+
+    let qrUrl = sellerProfile.payment_qr_url || null;
+
+    try{
+        if(file){
+            if(!file.type.startsWith("image/")){
+                throw new Error("Please select an image file.");
+            }
+
+            const ext = file.name.split(".").pop().toLowerCase();
+            const path = currentUser.id + "/payment-qr-" + Date.now() + "." + ext;
+
+            const upload = await db.storage
+                .from("seller-qr")
+                .upload(path,file,{upsert:false});
+
+            if(upload.error) throw upload.error;
+
+            const urlResult = db.storage
+                .from("seller-qr")
+                .getPublicUrl(path);
+
+            qrUrl = urlResult.data.publicUrl;
+        }
+
+        const update = await db
+            .from("seller_profiles")
+            .update({
+                payment_upi_id:upi,
+                payment_qr_url:qrUrl
+            })
+            .eq("id",sellerProfile.id);
+
+        if(update.error) throw update.error;
+
+        sellerProfile.payment_upi_id = upi;
+        sellerProfile.payment_qr_url = qrUrl;
+
+        if(qrUrl){
+            document.getElementById("qrPreview").src = qrUrl;
+            document.getElementById("qrPreview").style.display = "block";
+        }
+
+        showMessage("qrMessage","Payment details saved successfully.",true);
+
+    }catch(error){
+        showMessage("qrMessage","Save failed: " + error.message);
+    }
+}
+
+document.getElementById("qrFile").addEventListener("change",function(){
+    const file = this.files[0];
+
+    if(file){
+        if(!file.type.startsWith("image/")){
+            showMessage("qrMessage","Please select an image file.");
+            this.value = "";
+            return;
+        }
+
+        document.getElementById("qrPreview").src = URL.createObjectURL(file);
+        document.getElementById("qrPreview").style.display = "block";
+    }
+});
+
+document.getElementById("productForm").addEventListener("submit",async function(e){
+    e.preventDefault();
+
+    if(!currentUser || !sellerProfile) return;
+
+    if(String(sellerProfile.status).toLowerCase() !== "approved"){
+        showMessage("uploadMessage","Your seller account is not approved yet.");
+        return;
+    }
+
+    const name = document.getElementById("productName").value.trim();
+    const description = document.getElementById("productDescription").value.trim();
+    const category = document.getElementById("productCategory").value.trim();
+    const price = Number(document.getElementById("productPrice").value);
+    const stock = Number(document.getElementById("productStock").value);
+    const utr = document.getElementById("utrNumber").value.trim();
+    const imageFile = document.getElementById("productImage").files[0];
+
+    if(!name || !description || !category || !imageFile || !utr){
+        showMessage("uploadMessage","Please complete all fields.");
+        return;
+    }
+
+    if(!Number.isFinite(price) || price <= 0){
+        showMessage("uploadMessage","Enter a valid product price.");
+        return;
+    }
+
+    if(!Number.isInteger(stock) || stock < 10){
+        showMessage("uploadMessage","Initial stock must be at least 10.");
+        return;
+    }
+
+    if(utr.length < 6){
+        showMessage("uploadMessage","Please enter a valid UTR / transaction number.");
+        return;
+    }
+
+    if(!imageFile.type.startsWith("image/")){
+        showMessage("uploadMessage","Please select a valid product image.");
+        return;
+    }
+
+    const button = document.getElementById("uploadBtn");
+    button.disabled = true;
+    button.textContent = "Submitting...";
+
+    let paymentCreated = false;
+
+    try{
+        const imageExt = imageFile.name.split(".").pop().toLowerCase();
+        const imagePath = currentUser.id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + imageExt;
+
+        const imageUpload = await db.storage
+            .from("images")
+            .upload(imagePath,imageFile,{upsert:false});
+
+        if(imageUpload.error) throw new Error("Product image upload failed: " + imageUpload.error.message);
+
+        const imageResult = db.storage
+            .from("images")
+            .getPublicUrl(imagePath);
+
+        const imageUrl = imageResult.data.publicUrl;
+
+        const paymentResult = await db
+            .from("seller_upload_payments")
+            .insert({
+                seller_id:currentUser.id,
+                amount:20,
+                upi_id:"beingbimalvicky@ybl",
+                utr_number:utr,
+                status:"pending",
+                payment_type:"product_upload",
+                product_count:1,
+                approved_count:0
+            })
+            .select("id")
+            .single();
+
+        if(paymentResult.error) throw new Error("Payment record failed: " + paymentResult.error.message);
+
+        paymentCreated = true;
+
+        const productResult = await db
+            .from("seller_products")
+            .insert({
+                seller_id:sellerProfile.id,
+                name:name,
+                description:description,
+                price:price,
+                image_url:imageUrl,
+                category:category,
+                stock:stock,
+                status:"pending",
+                upload_payment_id:paymentResult.data.id
+            });
+
+        if(productResult.error){
+            throw new Error("Payment record created, but product save failed. Contact Admin with UTR: " + utr + ". Error: " + productResult.error.message);
+        }
+
+        showMessage("uploadMessage","Product submitted. Payment verification and product approval are pending.",true);
+
+        document.getElementById("productForm").reset();
+        document.getElementById("productStock").value = 10;
+
+        await loadProducts();
+        await loadPayments();
+
+    }catch(error){
+        showMessage("uploadMessage",error.message);
+
+        if(paymentCreated){
+            showMessage("uploadMessage",error.message + " Your payment record may already exist. Do not submit again until checking the payment list.");
+        }
+
+    }finally{
+        button.disabled = false;
+        button.textContent = "Submit Product";
+    }
+});
+
+async function loadProducts(){
+    const tbody = document.getElementById("productsTable");
+    tbody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
+
+    const result = await db
+        .from("seller_products")
+        .select("id,name,price,stock,status,upload_payment_id")
+        .eq("seller_id",sellerProfile.id)
+        .order("created_at",{ascending:false});
+
+    if(result.error){
+        tbody.innerHTML = "<tr><td colspan='5'>Error: " + escapeHtml(result.error.message) + "</td></tr>";
+        return;
+    }
+
+    const products = result.data || [];
+
+    if(products.length === 0){
+        tbody.innerHTML = "<tr><td colspan='5'>No products uploaded yet.</td></tr>";
+        return;
+    }
+
+    const paymentIds = [...new Set(products.map(function(p){
+        return p.upload_payment_id;
+    }).filter(Boolean))];
+
+    let paymentMap = {};
+
+    if(paymentIds.length > 0){
+        const paymentResult = await db
+            .from("seller_upload_payments")
+            .select("id,status")
+            .in("id",paymentIds);
+
+        if(paymentResult.error){
+            tbody.innerHTML = "<tr><td colspan='5'>Payment status error: " + escapeHtml(paymentResult.error.message) + "</td></tr>";
+            return;
+        }
+
+        (paymentResult.data || []).forEach(function(p){
+            paymentMap[p.id] = p.status;
+        });
+    }
+
+    tbody.innerHTML = products.map(function(p){
+        return "<tr>" +
+            "<td>" + escapeHtml(p.name) + "</td>" +
+            "<td>₹" + Number(p.price).toFixed(2) + "</td>" +
+            "<td>" + escapeHtml(p.stock) + "</td>" +
+            "<td class='status'>" + escapeHtml(p.status || "pending") + "</td>" +
+            "<td class='status'>" + escapeHtml(paymentMap[p.upload_payment_id] || "pending") + "</td>" +
+            "</tr>";
+    }).join("");
+}
+
+async function loadPayments(){
+    const tbody = document.getElementById("paymentsTable");
+    tbody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
+
+    const result = await db
+        .from("seller_upload_payments")
+        .select("id,amount,product_count,utr_number,status,created_at,payment_type")
+        .eq("seller_id",currentUser.id)
+        .eq("payment_type","product_upload")
+        .order("created_at",{ascending:false});
+
+    if(result.error){
+        tbody.innerHTML = "<tr><td colspan='5'>Error: " + escapeHtml(result.error.message) + "</td></tr>";
+        return;
+    }
+
+    const payments = result.data || [];
+
+    if(payments.length === 0){
+        tbody.innerHTML = "<tr><td colspan='5'>No product upload payments yet.</td></tr>";
+        return;
+    }
+
+    tbody.innerHTML = payments.map(function(p){
+        const date = p.created_at
+            ? new Date(p.created_at).toLocaleDateString("en-IN")
+            : "-";
+
+        return "<tr>" +
+            "<td>" + escapeHtml(date) + "</td>" +
+            "<td>" + escapeHtml(p.product_count) + "</td>" +
+            "<td>₹" + escapeHtml(p.amount) + "</td>" +
+            "<td>" + escapeHtml(p.utr_number || "-") + "</td>" +
+            "<td class='status'>" + escapeHtml(p.status || "pending") + "</td>" +
+            "</tr>";
+    }).join("");
 }
 
 async function checkSession(){
-  const {data:{session}}=await db.auth.getSession();
-  if(session){
-    await loadDashboard(session.user);
-  }
+    if(!db) return;
+
+    try{
+        const result = await db.auth.getSession();
+
+        if(result.error) throw result.error;
+
+        if(result.data.session){
+            await loadDashboard(result.data.session.user);
+        }
+
+    }catch(error){
+        showMessage("loginMessage","Session error: " + error.message);
+    }
 }
 
-checkSession();
+function initializeDashboard(){
+    if(!window.supabase || !window.supabase.createClient){
+        showMessage("loginMessage","Supabase library could not load. Check your internet connection.");
+        return;
+    }
+
+    db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    checkSession();
+}
+
+window.login = login;
+window.logout = logout;
+
+initializeDashboard();
+
 </script>
 </body>
 </html>
