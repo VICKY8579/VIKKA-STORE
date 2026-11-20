@@ -247,7 +247,7 @@ async function savePaymentDetails(){
 
   if(file){
     const ext = file.name.split(".").pop().toLowerCase();
-    const path = ${currentUser.id}/payment-qr-${Date.now()}.${ext};
+    const path = currentUser.id + "/payment-qr-" + Date.now() + "." + ext;
 
     const {error:uploadError} = await db.storage
       .from("seller-qr")
