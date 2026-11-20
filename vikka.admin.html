@@ -2,36 +2,40 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIKKA Store - Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIKKA STORE - Admin Dashboard</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f3f5f9;color:#202b3c;font-family:Arial,sans-serif}
-header{background:#172554;color:white;padding:18px}
-header h2{margin:0}
-.container{max-width:1200px;margin:22px auto;padding:12px}
-.card{background:white;padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 10px #00000010}
-input,select,button{padding:12px;border:1px solid #ccd3df;border-radius:7px;font-size:15px;margin:5px 3px;max-width:100%}
-input{min-width:200px}
+header{background:#172554;color:white;padding:22px}
+header h2{margin:0 0 8px}
+.container{max-width:1250px;margin:22px auto;padding:12px}
+.card{background:white;padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 12px #0001}
+input,select,button{padding:12px;border:1px solid #ccd3df;border-radius:7px;font-size:15px;margin:5px 3px}
+input{max-width:100%}
 button{background:#1d4ed8;color:white;border:0;cursor:pointer}
-button:hover{background:#1e40af}
-.hidden{display:none}
+button:disabled{opacity:.6;cursor:wait}
+.hidden{display:none!important}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 .stat{background:#eef2ff;padding:16px;border-radius:10px}
 .stat small{color:#475569}
 .stat h2{margin:8px 0}
-table{width:100%;border-collapse:collapse;min-width:850px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
 th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}
 th{background:#eef2ff}
-.table-wrap{overflow-x:auto}
-#message{padding:10px;color:#b91c1c}
-.success{color:#15803d!important}
+#status,#loginStatus{padding:10px;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.good{color:#15803d}
+.bad{color:#b91c1c}
 .muted{color:#64748b;font-size:13px}
+.login-input{width:100%;max-width:420px;display:block;margin:12px 0}
 </style>
 </head>
-<body>
 
+<body>
 <header>
   <h2>VIKKA STORE - ADMIN PANEL</h2>
   <p>Orders, Customers & Sales Management</p>
@@ -39,32 +43,39 @@ th{background:#eef2ff}
 
 <div class="container">
 
-<section class="card" id="loginBox">
-  <h3>Admin Login</h3>
-  <input id="email" type="email" placeholder="Admin Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p id="loginMessage"></p>
-</section>
+<div class="card" id="loginBox">
+  <h2>Admin Login</h2>
+  <form id="loginForm">
+    <input class="login-input" id="email" type="email"
+      placeholder="Admin Email" value="bimalvicky1@gmail.com"
+      autocomplete="username" required>
 
-<section id="dashboard" class="hidden">
+    <input class="login-input" id="password" type="password"
+      placeholder="Password" autocomplete="current-password" required>
+
+    <button id="loginButton" type="submit">Login</button>
+  </form>
+  <div id="loginStatus" role="status">Enter your Admin email and password.</div>
+</div>
+
+<div id="dashboard" class="hidden">
 
   <div class="card">
     <strong>Admin Dashboard</strong>
-    <button onclick="loadOrders()">Refresh Records</button>
-    <button onclick="logout()">Logout</button>
-    <p class="muted">Only authorized VIKKA administrators can access these records.</p>
-    <p id="message"></p>
+    <button id="refreshButton">Refresh Records</button>
+    <button id="logoutButton">Logout</button>
+    <div id="status" role="status"></div>
+    <p class="muted">Authorized VIKKA administrators only.</p>
   </div>
 
   <div class="card">
     <h3>Order Period</h3>
-    <select id="period" onchange="loadOrders()">
+    <select id="period">
       <option value="today">Today</option>
       <option value="3months" selected>Last 3 Months</option>
       <option value="all">All Records</option>
     </select>
-    <button onclick="loadOrders()">Search</button>
+    <button id="searchButton">Search</button>
   </div>
 
   <div class="stats">
@@ -77,7 +88,7 @@ th{background:#eef2ff}
       <h2 id="totalSales">₹0</h2>
     </div>
     <div class="stat">
-      <small>Products Sold (Quantity)</small>
+      <small>Products Sold</small>
       <h2 id="totalQty">0</h2>
     </div>
     <div class="stat">
@@ -87,14 +98,15 @@ th{background:#eef2ff}
   </div>
 
   <div class="card">
-    <h3>Customer Search & Order History</h3>
-    <input id="search" placeholder="Search name, mobile, address or product" oninput="renderOrders()">
-    <p class="muted">Search a customer to see their previous orders and delivery addresses.</p>
+    <h3>Customer Search</h3>
+    <input id="searchInput" style="width:100%"
+      placeholder="Search customer name, mobile, address or product">
+    <p class="muted">Search for a customer's previous orders and delivery addresses.</p>
   </div>
 
   <div class="card">
     <h3>Order Records</h3>
-    <button onclick="exportCSV()">Download CSV Report</button>
+    <button id="csvButton">Download CSV Report</button>
     <div class="table-wrap">
       <table>
         <thead>
@@ -121,197 +133,371 @@ th{background:#eef2ff}
 
   <div class="card">
     <h3>Customer Order History</h3>
-    <div id="customerHistory" class="muted">Search by customer name or mobile number to view order history.</div>
+    <div id="customerHistory" class="muted">
+      Search a customer to view their order history.
+    </div>
   </div>
 
-</section>
+</div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://izjlpgpvrmvhcefxulhj.supabase.co";
-const SUPABASE_KEY = "sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
+(function(){
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+"use strict";
 
+const SUPABASE_URL =
+"https://izjlpgpvrmvhcefxulhj.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-";
+
+let db = null;
 let allOrders = [];
 
-function showMessage(message, success=false) {
-  const el = document.getElementById("message");
-  el.textContent = message;
-  el.className = success ? "success" : "";
+const $ = id => document.getElementById(id);
+
+function loginMessage(message, good=false){
+  $("loginStatus").textContent = message;
+  $("loginStatus").className = good ? "good" : "bad";
 }
 
-async function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const msg = document.getElementById("loginMessage");
+function dashboardMessage(message, good=false){
+  $("status").textContent = message;
+  $("status").className = good ? "good" : "bad";
+}
 
-  if (!email || !password) {
-    msg.textContent = "Enter email and password.";
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[c]);
+}
+
+function money(value){
+  return "₹" + Number(value || 0).toLocaleString("en-IN");
+}
+
+function dateText(value){
+  if(!value) return "-";
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? "-" : d.toLocaleString("en-IN");
+}
+
+function initialize(){
+
+  if(!window.supabase || !window.supabase.createClient){
+    loginMessage(
+      "Supabase library could not load. Check your internet connection and reload this page."
+    );
+    $("loginButton").disabled = true;
     return;
   }
 
-  msg.textContent = "Checking login...";
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-  const {data, error} = await db.auth.signInWithPassword({
-    email, password
+  $("loginForm").addEventListener("submit", login);
+  $("refreshButton").addEventListener("click", loadOrders);
+  $("searchButton").addEventListener("click", loadOrders);
+  $("logoutButton").addEventListener("click", logout);
+  $("csvButton").addEventListener("click", exportCSV);
+
+  $("searchInput").addEventListener("input", renderOrders);
+
+  db.auth.getSession().then(async result => {
+    if(result.error){
+      loginMessage(result.error.message);
+      return;
+    }
+
+    if(result.data.session){
+      await verifyAdmin();
+    }
+  }).catch(error => {
+    loginMessage("Session error: " + error.message);
   });
+}
 
-  if (error) {
-    msg.textContent = error.message;
+async function login(event){
+
+  event.preventDefault();
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if(!email || !password){
+    loginMessage("Enter email and password.");
     return;
   }
 
-  const userId = data.user.id;
-
-  const {data: admin, error: adminError} = await db
-    .from("vikka_admins")
-    .select("user_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (adminError || !admin) {
-    await db.auth.signOut();
-    msg.textContent = "Access denied. This account is not an authorized VIKKA admin.";
+  if(!db){
+    loginMessage("Supabase is not initialized. Reload the page.");
     return;
   }
 
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
+  $("loginButton").disabled = true;
+  loginMessage("Connecting to Supabase...");
 
-  await loadOrders();
+  try{
+
+    const result = await db.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(result.error){
+      loginMessage("Login failed: " + result.error.message);
+      return;
+    }
+
+    await verifyAdmin();
+
+  }catch(error){
+    loginMessage("Login error: " + (error.message || error));
+  }finally{
+    $("loginButton").disabled = false;
+  }
 }
 
-async function logout() {
-  await db.auth.signOut();
-  allOrders = [];
-  document.getElementById("dashboard").classList.add("hidden");
-  document.getElementById("loginBox").classList.remove("hidden");
-  document.getElementById("password").value = "";
+async function verifyAdmin(){
+
+  loginMessage("Checking Admin authorization...");
+
+  try{
+
+    const sessionResult = await db.auth.getSession();
+
+    if(sessionResult.error || !sessionResult.data.session){
+      loginMessage("Please login again.");
+      return;
+    }
+
+    const userId = sessionResult.data.session.user.id;
+
+    const result = await db
+      .from("vikka_admins")
+      .select("user_id")
+      .eq("user_id",userId)
+      .maybeSingle();
+
+    if(result.error){
+      loginMessage("Admin verification error: " + result.error.message);
+      await db.auth.signOut();
+      return;
+    }
+
+    if(!result.data){
+      loginMessage("Access denied. This account is not an authorized VIKKA Admin.");
+      await db.auth.signOut();
+      return;
+    }
+
+    $("loginBox").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+
+    dashboardMessage("Admin login successful.",true);
+
+    await loadOrders();
+
+  }catch(error){
+    loginMessage("Authorization error: " + (error.message || error));
+  }
 }
 
-async function loadOrders() {
-  showMessage("Loading order records...");
+async function loadOrders(){
 
-  const period = document.getElementById("period").value;
-  let query = db.from("vikka_orders").select("*").order("created_at", {ascending:false});
+  if(!db) return;
 
-  if (period === "today") {
-    const start = new Date();
-    start.setHours(0,0,0,0);
-    const end = new Date();
-    end.setHours(23,59,59,999);
-    query = query.gte("created_at", start.toISOString())
-                 .lte("created_at", end.toISOString());
-  }
+  dashboardMessage("Loading order records...");
 
-  if (period === "3months") {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 3);
-    query = query.gte("created_at", date.toISOString());
-  }
+  try{
 
-  const {data, error} = await query.limit(2000);
+    let query = db
+      .from("vikka_orders")
+      .select("*")
+      .order("created_at",{ascending:false});
 
-  if (error) {
-    allOrders = [];
+    const period = $("period").value;
+
+    if(period === "today"){
+
+      const now = new Date();
+
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()+1
+      );
+
+      query = query
+        .gte("created_at",start.toISOString())
+        .lt("created_at",end.toISOString());
+    }
+
+    if(period === "3months"){
+      const d = new Date();
+      d.setMonth(d.getMonth()-3);
+
+      query = query.gte("created_at",d.toISOString());
+    }
+
+    const result = await query.limit(2000);
+
+    if(result.error){
+      allOrders = [];
+      updateStats();
+      renderOrders();
+
+      dashboardMessage(
+        "Orders could not be loaded: " +
+        result.error.message +
+        ". Check the vikka_orders Admin SELECT policy."
+      );
+      return;
+    }
+
+    allOrders = result.data || [];
+
+    updateStats();
     renderOrders();
-    showMessage("Could not load orders: " + error.message);
-    return;
+
+    dashboardMessage(
+      "Records loaded successfully. Total records: " + allOrders.length,
+      true
+    );
+
+  }catch(error){
+    dashboardMessage("Order loading error: " + (error.message || error));
   }
-
-  allOrders = data || [];
-  updateStats();
-  renderOrders();
-  showMessage("Records loaded successfully.", true);
 }
 
-function updateStats() {
-  const total = allOrders.length;
-  const sales = allOrders.reduce((sum,o)=>sum + Number(o.total_amount || 0),0);
-  const qty = allOrders.reduce((sum,o)=>sum + Number(o.quantity || 0),0);
-  const customers = new Set(allOrders.map(o=>
-    (o.customer_phone || o.customer_name || "").toLowerCase()
-  ));
+function updateStats(){
 
-  document.getElementById("totalOrders").textContent = total;
-  document.getElementById("totalSales").textContent =
-    "₹" + sales.toLocaleString("en-IN");
-  document.getElementById("totalQty").textContent = qty;
-  document.getElementById("totalCustomers").textContent = customers.size;
+  const sales = allOrders.reduce(
+    (sum,o)=>sum + Number(o.total_amount || 0),0
+  );
+
+  const qty = allOrders.reduce(
+    (sum,o)=>sum + Number(o.quantity || 0),0
+  );
+
+  const customers = new Set(
+    allOrders.map(o => o.customer_phone || o.customer_name)
+  );
+
+  $("totalOrders").textContent = allOrders.length;
+  $("totalSales").textContent = money(sales);
+  $("totalQty").textContent = qty;
+  $("totalCustomers").textContent = customers.size;
 }
 
-function renderOrders() {
-  const term = document.getElementById("search").value.toLowerCase().trim();
+function renderOrders(){
+
+  const term = $("searchInput").value.toLowerCase().trim();
 
   const filtered = allOrders.filter(o => {
-    const text = [
-      o.customer_name, o.customer_phone, o.customer_address,
-      o.customer_city, o.product_name, o.order_number, o.order_source
+
+    const searchText = [
+      o.customer_name,
+      o.customer_phone,
+      o.customer_address,
+      o.customer_city,
+      o.product_name,
+      o.order_number,
+      o.order_source
     ].join(" ").toLowerCase();
-    return text.includes(term);
+
+    return searchText.includes(term);
   });
 
-  const tbody = document.getElementById("orderRows");
+  if(filtered.length === 0){
 
-  if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="11">No matching orders found.</td></tr>';
-  } else {
-    tbody.innerHTML = filtered.map(o => `
+    $("orderRows").innerHTML =
+      '<tr><td colspan="11">No matching orders found.</td></tr>';
+
+  }else{
+
+    $("orderRows").innerHTML = filtered.map(o => `
       <tr>
-        <td>${safeDate(o.created_at)}</td>
-        <td>${esc(o.order_number || "-")}</td>
-        <td>${esc(o.customer_name)}</td>
-        <td>${esc(o.customer_phone)}</td>
-        <td>${esc([o.customer_address,o.customer_city].filter(Boolean).join(", "))}</td>
-        <td>${esc(o.product_name)}</td>
+        <td>${escapeHTML(dateText(o.created_at))}</td>
+        <td>${escapeHTML(o.order_number || "-")}</td>
+        <td>${escapeHTML(o.customer_name)}</td>
+        <td>${escapeHTML(o.customer_phone)}</td>
+        <td>${escapeHTML([o.customer_address,o.customer_city].filter(Boolean).join(", "))}</td>
+        <td>${escapeHTML(o.product_name)}</td>
         <td>${Number(o.quantity || 0)}</td>
-        <td>₹${Number(o.total_amount || 0).toLocaleString("en-IN")}</td>
-        <td>${esc(o.order_source || "Unknown")}</td>
-        <td>${esc(o.payment_status || "Pending")}</td>
-        <td>${esc(o.order_status || "New")}</td>
+        <td>${money(o.total_amount)}</td>
+        <td>${escapeHTML(o.order_source || "Unknown")}</td>
+        <td>${escapeHTML(o.payment_status || "Pending")}</td>
+        <td>${escapeHTML(o.order_status || "New")}</td>
       </tr>
     `).join("");
   }
 
-  renderCustomerHistory(filtered, term);
+  renderHistory(filtered,term);
 }
 
-function renderCustomerHistory(filtered, term) {
-  const box = document.getElementById("customerHistory");
+function renderHistory(filtered,term){
 
-  if (!term) {
-    box.textContent = "Search by customer name or mobile number to view order history.";
+  const box = $("customerHistory");
+
+  if(!term){
+    box.textContent = "Search by customer name or mobile number to view history.";
     return;
   }
 
-  if (!filtered.length) {
+  if(!filtered.length){
     box.textContent = "No customer history found.";
     return;
   }
 
-  const customer = filtered[0];
-  const sameCustomer = allOrders.filter(o =>
-    (customer.customer_phone && o.customer_phone === customer.customer_phone) ||
-    (!customer.customer_phone && o.customer_name === customer.customer_name)
-  );
+  const first = filtered[0];
+
+  const phone = first.customer_phone;
+
+  const history = allOrders.filter(o => {
+    if(phone) return o.customer_phone === phone;
+    return o.customer_name === first.customer_name;
+  });
 
   box.innerHTML = `
-    <h4>${esc(customer.customer_name || "Customer")}</h4>
-    <p>Mobile: ${esc(customer.customer_phone || "-")}</p>
-    <p>Address: ${esc(customer.customer_address || "-")}, ${esc(customer.customer_city || "")}</p>
-    <p>Total Orders: ${sameCustomer.length}</p>
+    <h3>${escapeHTML(first.customer_name || "Customer")}</h3>
+    <p>Mobile: ${escapeHTML(phone || "-")}</p>
+    <p>Address: ${escapeHTML(first.customer_address || "-")}, ${escapeHTML(first.customer_city || "")}</p>
+    <p>Total Orders: ${history.length}</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Amount</th><th>Status</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Amount</th>
+            <th>Address</th>
+            <th>Status</th>
+          </tr>
+        </thead>
         <tbody>
-          ${sameCustomer.map(o=>`
+          ${history.map(o=>`
             <tr>
-              <td>${safeDate(o.created_at)}</td>
-              <td>${esc(o.product_name)}</td>
+              <td>${escapeHTML(dateText(o.created_at))}</td>
+              <td>${escapeHTML(o.product_name)}</td>
               <td>${Number(o.quantity || 0)}</td>
-              <td>₹${Number(o.total_amount || 0).toLocaleString("en-IN")}</td>
-              <td>${esc(o.order_status || "New")}</td>
+              <td>${money(o.total_amount)}</td>
+              <td>${escapeHTML([o.customer_address,o.customer_city].filter(Boolean).join(", "))}</td>
+              <td>${escapeHTML(o.order_status || "New")}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -320,54 +506,74 @@ function renderCustomerHistory(filtered, term) {
   `;
 }
 
-function safeDate(value) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString("en-IN");
-}
+function exportCSV(){
 
-function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
-  })[ch]);
-}
-
-function exportCSV() {
-  if (!allOrders.length) {
-    alert("No records to export.");
+  if(!allOrders.length){
+    alert("No records available to export.");
     return;
   }
 
   const headers = [
-    "Date","Order Number","Customer","Mobile","Address","City",
-    "Product","Quantity","Amount","Source","Payment Status","Order Status"
+    "Date","Order Number","Customer","Mobile",
+    "Address","City","Product","Quantity",
+    "Amount","Source","Payment Status","Order Status"
   ];
 
-  const rows = allOrders.map(o => [
-    o.created_at, o.order_number, o.customer_name, o.customer_phone,
-    o.customer_address, o.customer_city, o.product_name, o.quantity,
-    o.total_amount, o.order_source, o.payment_status, o.order_status
+  const rows = allOrders.map(o=>[
+    o.created_at,o.order_number,o.customer_name,
+    o.customer_phone,o.customer_address,o.customer_city,
+    o.product_name,o.quantity,o.total_amount,
+    o.order_source,o.payment_status,o.order_status
   ]);
 
-  const csv = [headers,...rows].map(row =>
-    row.map(value => "${String(value ?? "").replace(/"/g,'""')}").join(",")
+  const csv = [headers,...rows].map(row=>
+    row.map(v=>'"'+String(v ?? "").replace(/"/g,'""')+'"').join(",")
   ).join("\r\n");
 
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const blob = new Blob(["\uFEFF"+csv],{
+    type:"text/csv;charset=utf-8;"
+  });
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
-  a.download = "vikka-orders-report.csv";
+  a.download = "VIKKA-Orders-Report.csv";
   a.click();
+
   URL.revokeObjectURL(url);
 }
 
-db.auth.getSession().then(({data}) => {
-  if (data.session) {
-    document.getElementById("email").value =
-      data.session.user.email || "";
-  }
+async function logout(){
+
+  if(!db) return;
+
+  await db.auth.signOut();
+
+  allOrders = [];
+
+  $("dashboard").classList.add("hidden");
+  $("loginBox").classList.remove("hidden");
+  $("password").value = "";
+
+  loginMessage("You have logged out.");
+}
+
+window.addEventListener("error",event=>{
+  loginMessage("Page error: " + event.message);
 });
+
+window.addEventListener("unhandledrejection",event=>{
+  loginMessage("Unexpected error: " + String(event.reason));
+});
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded",initialize);
+}else{
+  initialize();
+}
+
+})();
 </script>
 </body>
 </html>
