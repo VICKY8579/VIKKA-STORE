@@ -1,0 +1,20 @@
+{
+  "id": "/VIKKA-STORE/",
+  "name": "VIKKA Store",
+  "short_name": "VIKKA",
+  "description": "VIKKA Store - Your Online Shopping Partner",
+  "start_url": "/VIKKA-STORE/",
+  "scope": "/VIKKA-STORE/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#142b4a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/VIKKA-STORE/VIKKA-STORE-LOGO.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
