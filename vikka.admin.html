@@ -587,28 +587,30 @@ productCard.innerHTML = `
           <th>Product</th>
           <th>Price</th>
           <th>Category</th>
-          <th>Status</th>
+          <th>UTR Number</th>
+          <th>Payment</th>
+          <th>Product Status</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody id="productRows">
-        <tr><td colspan="5">No products loaded.</td></tr>
+        <tr><td colspan="7">No products loaded.</td></tr>
       </tbody>
     </table>
   </div>
 `;
-
 $("dashboard").appendChild(productCard);
 
 async function loadSellerProducts() {
-  const statusBox = document.getElementById("productStatus");
-  const rows = document.getElementById("productRows");
+  const statusBox = $("productStatus");
+  const rows = $("productRows");
 
   statusBox.textContent = "Loading products...";
+  rows.innerHTML = "";
 
-  const { data, error } = await db
+  const { data: products, error } = await db
     .from("seller_products")
-    .select("id,name,price,category,status")
+    .select("id,name,price,category,status,upload_payment_id")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -616,64 +618,140 @@ async function loadSellerProducts() {
     return;
   }
 
-  rows.innerHTML = "";
-  statusBox.textContent = "Total products: " + data.length;
-
-  if (data.length === 0) {
+  if (!products || products.length === 0) {
+    statusBox.textContent = "Total products: 0";
     rows.innerHTML =
-      '<tr><td colspan="5">No seller products found.</td></tr>';
+      '<tr><td colspan="7">No seller products found.</td></tr>';
     return;
   }
 
-  data.forEach(product => {
+  statusBox.textContent = "Total products: " + products.length;
+
+  for (const product of products) {
+    let payment = null;
+
+    if (product.upload_payment_id) {
+      const result = await db
+        .from("seller_upload_payments")
+        .select("id,amount,utr_number,status,payment_type")
+        .eq("id", product.upload_payment_id)
+        .maybeSingle();
+
+      if (result.error) {
+        statusBox.textContent =
+          "Payment lookup error: " + result.error.message;
+      } else {
+        payment = result.data;
+      }
+    }
+
     const tr = document.createElement("tr");
 
-    const name = document.createElement("td");
-    name.textContent = product.name || "";
+    const values = [
+      product.name || "-",
+      "₹" + Number(product.price || 0),
+      product.category || "-",
+      payment?.utr_number || "-",
+      payment?.status || "Payment record missing",
+      product.status || "pending"
+    ];
 
-    const price = document.createElement("td");
-    price.textContent = "₹" + product.price;
-
-    const category = document.createElement("td");
-    category.textContent = product.category || "-";
-
-    const currentStatus = document.createElement("td");
-    currentStatus.textContent = product.status || "pending";
+    values.forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
 
     const action = document.createElement("td");
 
-    ["approved", "rejected"].forEach(newStatus => {
-      const button = document.createElement("button");
-      button.textContent =
-        newStatus === "approved" ? "Approve" : "Reject";
+    const verifyButton = document.createElement("button");
+    verifyButton.textContent = "Verify ₹20 Payment";
+    verifyButton.disabled =
+      !payment ||
+      payment.status !== "pending" ||
+      payment.payment_type !== "product_upload";
 
-      button.addEventListener("click", async () => {
-        if (!confirm("Confirm " + newStatus + " product?")) return;
+    verifyButton.onclick = async () => {
+      if (!confirm(
+        "Please verify the actual UPI receipt and UTR before confirming payment."
+      )) return;
 
-        const { error } = await db
-          .from("seller_products")
-          .update({ status: newStatus })
-          .eq("id", product.id);
+      const { error } = await db
+        .from("seller_upload_payments")
+        .update({
+          status: "verified",
+          verified_at: new Date().toISOString()
+        })
+        .eq("id", payment.id)
+        .eq("status", "pending");
 
-        if (error) {
-          alert("Update failed: " + error.message);
-          return;
-        }
+      if (error) {
+        alert("Payment verification failed: " + error.message);
+        return;
+      }
 
-        alert("Product status updated.");
-        loadSellerProducts();
-      });
+      alert("Payment verified. You can now approve the product.");
+      await loadSellerProducts();
+    };
 
-      action.appendChild(button);
-    });
+    action.appendChild(verifyButton);
 
-    tr.append(name, price, category, currentStatus, action);
+    const approveButton = document.createElement("button");
+    approveButton.textContent = "Approve";
+    approveButton.disabled =
+      !payment ||
+      payment.status !== "verified" ||
+      product.status === "approved";
+
+    approveButton.onclick = async () => {
+      if (!confirm("Approve this product?")) return;
+
+      const { error } = await db
+        .from("seller_products")
+        .update({ status: "approved" })
+        .eq("id", product.id)
+        .eq("status", "pending");
+
+      if (error) {
+        alert("Approval failed: " + error.message);
+        return;
+      }
+
+      alert("Product approved successfully.");
+      await loadSellerProducts();
+    };
+
+    action.appendChild(approveButton);
+
+    const rejectButton = document.createElement("button");
+    rejectButton.textContent = "Reject";
+    rejectButton.disabled = product.status === "rejected";
+
+    rejectButton.onclick = async () => {
+      if (!confirm("Reject this product?")) return;
+
+      const { error } = await db
+        .from("seller_products")
+        .update({ status: "rejected" })
+        .eq("id", product.id);
+
+      if (error) {
+        alert("Rejection failed: " + error.message);
+        return;
+      }
+
+      alert("Product rejected.");
+      await loadSellerProducts();
+    };
+
+    action.appendChild(rejectButton);
+    tr.appendChild(action);
     rows.appendChild(tr);
-  });
+  }
 }
 
-document.getElementById("refreshProducts")
-  .addEventListener("click", loadSellerProducts);
+$("refreshProducts").addEventListener("click", loadSellerProducts);
+
 
 // VIKKA SELLER REGISTRATION APPROVAL
 const sellerCard = document.createElement("div");
@@ -684,14 +762,14 @@ sellerCard.innerHTML = `
   <p id="sellerStatus">Click Refresh Sellers.</p>
   <div id="sellerList"></div>
 `;
-document.body.appendChild(sellerCard);
 
-document.getElementById("refreshSellers").onclick =
-async function () {
-  const status = document.getElementById("sellerStatus");
-  const list = document.getElementById("sellerList");
+$("dashboard").appendChild(sellerCard);
 
-  status.textContent = "Loading...";
+$("refreshSellers").onclick = async function () {
+  const status = $("sellerStatus");
+  const list = $("sellerList");
+
+  status.textContent = "Loading sellers...";
   list.innerHTML = "";
 
   const { data: sellers, error } = await db
@@ -700,22 +778,18 @@ async function () {
     .order("created_at", { ascending: false });
 
   if (error) {
-    status.textContent = error.message;
+    status.textContent = "Error: " + error.message;
     return;
   }
 
   status.textContent = "Total Sellers: " + sellers.length;
 
   for (const seller of sellers) {
-    const { data: payments } = await db
+    const { data: payments, error: paymentError } = await db
       .from("seller_upload_payments")
       .select("id,amount,utr_number,status")
       .eq("seller_id", seller.id)
       .eq("payment_type", "registration");
-
-    const verified = (payments || []).some(
-      p => p.status === "verified"
-    );
 
     const card = document.createElement("div");
     card.style.cssText =
@@ -723,25 +797,36 @@ async function () {
 
     const details = document.createElement("p");
     details.textContent =
-      "Name: " + seller.full_name +
-      " | Mobile: " + seller.phone +
-      " | Status: " + seller.status;
+      "Name: " + (seller.full_name || "-") +
+      " | Mobile: " + (seller.phone || "-") +
+      " | Status: " + (seller.status || "-");
 
     card.appendChild(details);
 
-    (payments || []).forEach(p => {
+    if (paymentError) {
+      const errorText = document.createElement("p");
+      errorText.textContent =
+        "Payment loading error: " + paymentError.message;
+      card.appendChild(errorText);
+    }
+
+    (payments || []).forEach(payment => {
       const info = document.createElement("p");
       info.textContent =
-        "Registration Fee: ₹" + p.amount +
-        " | UTR: " + p.utr_number +
-        " | Payment: " + p.status;
+        "Registration Fee: ₹" + payment.amount +
+        " | UTR: " + (payment.utr_number || "-") +
+        " | Payment: " + payment.status;
+
       card.appendChild(info);
 
-      if (p.status === "pending") {
+      if (payment.status === "pending") {
         const verify = document.createElement("button");
         verify.textContent = "Verify Payment";
+
         verify.onclick = async () => {
-          if (!confirm("Have you checked the actual UPI payment?")) return;
+          if (!confirm(
+            "Have you checked the actual UPI payment and UTR?"
+          )) return;
 
           const { error } = await db
             .from("seller_upload_payments")
@@ -749,39 +834,50 @@ async function () {
               status: "verified",
               verified_at: new Date().toISOString()
             })
-            .eq("id", p.id);
+            .eq("id", payment.id)
+            .eq("status", "pending");
 
-          if (error) alert(error.message);
-          else {
-            alert("Payment verified.");
-            document.getElementById("refreshSellers").click();
+          if (error) {
+            alert("Verification failed: " + error.message);
+          } else {
+            alert("Registration payment verified.");
+            $("refreshSellers").click();
           }
         };
+
         card.appendChild(verify);
       }
     });
 
+    const hasVerifiedPayment =
+      (payments || []).some(p => p.status === "verified");
+
     const approve = document.createElement("button");
     approve.textContent = "Approve Seller";
-    approve.disabled = !verified || seller.status === "approved";
+    approve.disabled =
+      !hasVerifiedPayment || seller.status === "approved";
+
     approve.onclick = async () => {
-      if (!confirm("Have you checked the seller documents and payment?")) return;
+      if (!confirm("Approve this seller?")) return;
 
       const { error } = await db
         .from("seller_profiles")
         .update({ status: "approved" })
         .eq("id", seller.id);
 
-      if (error) alert(error.message);
-      else {
-        alert("Seller Approved");
-        document.getElementById("refreshSellers").click();
+      if (error) {
+        alert("Seller approval failed: " + error.message);
+      } else {
+        alert("Seller approved.");
+        $("refreshSellers").click();
       }
     };
+
     card.appendChild(approve);
 
     const reject = document.createElement("button");
     reject.textContent = "Reject Seller";
+
     reject.onclick = async () => {
       if (!confirm("Reject this seller?")) return;
 
@@ -790,17 +886,19 @@ async function () {
         .update({ status: "rejected" })
         .eq("id", seller.id);
 
-      if (error) alert(error.message);
-      else {
-        alert("Seller Rejected");
-        document.getElementById("refreshSellers").click();
+      if (error) {
+        alert("Seller rejection failed: " + error.message);
+      } else {
+        alert("Seller rejected.");
+        $("refreshSellers").click();
       }
     };
-    card.appendChild(reject);
 
+    card.appendChild(reject);
     list.appendChild(card);
   }
 };
+
 })();
 </script>
 </body>
