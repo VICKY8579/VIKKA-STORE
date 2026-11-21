@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIKKA Store | Checkout</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f7fa;color:#202938;margin:0}
+header{background:#142b4a;color:white;padding:15px;display:flex;align-items:center;gap:12px}
+header img{width:55px;height:55px;object-fit:contain;background:white;border-radius:8px}
+main{max-width:650px;margin:20px auto;padding:15px}
+.card{background:white;padding:20px;margin:15px 0;border-radius:15px;box-shadow:0 2px 12px #ddd}
+input,textarea{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}
+button{background:#ffbd45;border:0;padding:15px;width:100%;border-radius:9px;font-size:17px;font-weight:bold}
+.qr{max-width:190px;width:100%;display:block;margin:15px auto}
+.muted{color:#666}
+</style>
+</head>
+<body>
+<header>
+<img src="VIKKA-STORE-LOGO.jpeg" alt="VIKKA Store">
+<strong>VIKKA STORE — Checkout</strong>
+</header>
+<main>
+<div class="card">
+<h2>Delivery Details</h2>
+<input id="name" placeholder="Customer Name" required>
+<input id="mobile" placeholder="Mobile Number" maxlength="10" required>
+<textarea id="address" placeholder="Full Delivery Address" required></textarea>
+<input id="pin" placeholder="PIN Code" maxlength="6" required>
+</div>
+<div class="card">
+<h2>Order Summary</h2>
+<div id="items">Loading cart...</div>
+<h3 id="total"></h3>
+</div>
+<div class="card">
+<h2>Pay Seller Directly</h2>
+<p class="muted">Seller payment details will appear here when the cart products have valid seller IDs.</p>
+<div id="sellerPayments">Loading seller details...</div>
+</div>
+<div class="card">
+<h2>Place Order</h2>
+<input id="utr" placeholder="UPI Transaction / UTR Number">
+<button onclick="placeOrder()">Place Order</button>
+<p id="message"></p>
+</div>
+</main>
+<script>
+const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let cart=[];
+try{cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]')}catch(e){cart=[]}
+function price(p){return Number(p.price||p.selling_price||0)}
+function name(p){return p.name||p.title||'Product'}
+function render(){
+let total=0;
+document.getElementById('items').innerHTML=cart.map(p=>{
+let sub=price(p)*Number(p.quantity||1);total+=sub;
+return '<p>'+name(p)+' × '+(p.quantity||1)+' — ₹'+sub+'</p>';
+}).join('')||'Your cart is empty.';
+document.getElementById('total').textContent='Total: ₹'+total;
+}
+async function loadSellers(){
+const ids=[...new Set(cart.map(p=>p.seller_id).filter(Boolean))];
+const box=document.getElementById('sellerPayments');
+if(!ids.length){box.textContent='Your cart does not contain seller_id values. Seller payment details cannot be matched.';return;}
+const {data,error}=await db.from('seller_profiles').select('id,shop_name,full_name,payment_upi_id,payment_qr_url').in('id',ids);
+if(error){box.textContent='Seller payment details could not be loaded. Please contact VIKKA Store.';return;}
+box.innerHTML=(data||[]).map(s=>{
+return '<h3>'+(s.shop_name||s.full_name||'Seller')+'</h3>'+
+(s.payment_upi_id?'<p>UPI ID: '+s.payment_upi_id+'</p>':'<p>UPI ID not added</p>')+
+(s.payment_qr_url?'<img class="qr" src="'+s.payment_qr_url+'" alt="Seller QR Code">':'<p>QR code not added</p>');
+}).join('');
+}
+function placeOrder(){
+const n=document.getElementById('name').value.trim();
+const m=document.getElementById('mobile').value.trim();
+const a=document.getElementById('address').value.trim();
+const pin=document.getElementById('pin').value.trim();
+if(!n||!/^[0-9]{10}$/.test(m)||!a||!/^[0-9]{6}$/.test(pin)){
+alert('Please enter valid name, 10-digit mobile, full address and 6-digit PIN.');
+return;
+}
+document.getElementById('message').textContent='Your details are ready, but order submission is not connected yet. Please do not treat this as a confirmed order or payment.';
+}
+render();
+loadSellers();
+</script>
+</body>
+</html>
