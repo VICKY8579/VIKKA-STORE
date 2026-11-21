@@ -39,8 +39,11 @@ button:disabled{opacity:.5}
 #preview{max-width:150px;max-height:130px;object-fit:contain;display:none}
 .tablewrap{overflow:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{border:1px solid #e2e6ed;padding:9px;text-align:left;white-space:nowrap}
-th{background:#edf3ff}
+td,th{border:1px solid #e2e6ed;padding:9px;text-align:left;white-space:normal;vertical-align:top}
+th{background:#edf3ff;white-space:nowrap}
+.order-table{min-width:1250px}
+.order-table td{max-width:230px;overflow-wrap:anywhere}
+.order-table th{position:sticky;top:0}
 @media(max-width:650px){.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -90,8 +93,8 @@ th{background:#edf3ff}
 
 <section id="home" class="tab card">
 <h3>VIKKA Store Overview</h3>
-<p>आपके मौजूदा Supabase Database से डेटा लोड किया जा रहा है।</p>
-<p class="muted">Products, Orders, Customers और बाकी उपलब्ध Tables को ऊपर से खोलें।</p>
+<p>Your VIKKA Store database overview.</p>
+<p class="muted">Products, Orders, Customers and other available tables.</p>
 <button class="yellow" onclick="refreshAll()">Refresh Dashboard</button>
 <p id="homeMsg" class="muted"></p>
 </section>
@@ -174,14 +177,15 @@ Show product in store
 </section>
 
 <section id="orders" class="tab card hidden">
-<h3>Customer Orders</h3>
-<button class="yellow" onclick="loadTable('orders')">Refresh Orders</button>
-<div id="ordersData" class="tablewrap"></div>
+<h3>VIKKA Customer Orders</h3>
+<p class="muted">All seller orders and customer details.</p>
+<button class="yellow" onclick="loadStoreOrders()">Refresh VIKKA Orders</button>
+<div id="ordersData" class="tablewrap" style="margin-top:14px"></div>
 </section>
 
 <section id="order_items" class="tab card hidden">
 <h3>Order Items</h3>
-<button class="yellow" onclick="loadTable('order_items')">Refresh Order Items</button>
+<button class="yellow" onclick="loadTable('store_order_items')">Refresh Order Items</button>
 <div id="order_itemsData" class="tablewrap"></div>
 </section>
 
@@ -318,7 +322,11 @@ function showTab(id,button){
  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("selected"));
  button.classList.add("selected");
 
- if(["categories","orders","order_items","customers","addresses"].includes(id)){
+ if(id==="orders"){
+  loadStoreOrders();
+ }else if(id==="order_items"){
+  loadTable("store_order_items");
+ }else if(["categories","customers","addresses"].includes(id)){
   loadTable(id);
  }
 }
@@ -328,17 +336,24 @@ function showTab(id,button){
 async function refreshAll(){
  await loadProducts();
 
- const tables = ["orders","customers"];
+ const {count:orderTotal,error:orderError} = await db
+  .from("store_orders")
+  .select("*",{count:"exact",head:true});
 
- for(const table of tables){
-  const {count,error} = await db
-   .from(table)
-   .select("*",{count:"exact",head:true});
+ if(!orderError){
+  el("orderCount").textContent = orderTotal || 0;
+ }else{
+  el("orderCount").textContent = "—";
+ }
 
-  if(!error){
-   if(table==="orders") el("orderCount").textContent = count || 0;
-   if(table==="customers") el("customerCount").textContent = count || 0;
-  }
+ const {count:customerTotal,error:customerError} = await db
+  .from("store_orders")
+  .select("customer_mobile",{count:"exact",head:true});
+
+ if(!customerError){
+  el("customerCount").textContent = customerTotal || 0;
+ }else{
+  el("customerCount").textContent = "—";
  }
 
  el("homeMsg").textContent = "Dashboard refreshed.";
@@ -578,11 +593,137 @@ async function deleteProduct(id){
 }
 
 
+// ADMIN: LOAD NEW VIKKA ORDERS
+async function loadStoreOrders(){
+ if(!currentUser) return;
+
+ const output = el("ordersData");
+ output.innerHTML = "Loading VIKKA orders...";
+
+ try{
+  const {data:orders,error} = await db
+   .from("store_orders")
+   .select("*")
+   .order("created_at",{ascending:false})
+   .limit(200);
+
+  if(error) throw error;
+
+  if(!orders || orders.length===0){
+   output.innerHTML = "<p>No VIKKA orders found.</p>";
+   return;
+  }
+
+  const orderIds = orders.map(o=>o.id);
+  const sellerIds = [...new Set(orders.map(o=>o.seller_id).filter(Boolean))];
+
+  const {data:items,error:itemError} = await db
+   .from("store_order_items")
+   .select("*")
+   .in("order_id",orderIds);
+
+  if(itemError) throw itemError;
+
+  let sellers = [];
+
+  if(sellerIds.length){
+   const sellerResult = await db
+    .from("seller_profiles")
+    .select("id,full_name,shop_name")
+    .in("id",sellerIds);
+
+   if(!sellerResult.error){
+    sellers = sellerResult.data || [];
+   }
+  }
+
+  const sellerMap = {};
+  sellers.forEach(s=>{
+   sellerMap[s.id] = s.shop_name || s.full_name || s.id;
+  });
+
+  const itemMap = {};
+  (items||[]).forEach(item=>{
+   if(!itemMap[item.order_id]) itemMap[item.order_id] = [];
+   itemMap[item.order_id].push(item);
+  });
+
+  let html = `<table class="order-table">
+   <thead><tr>
+    <th>Order No.</th>
+    <th>Customer Name</th>
+    <th>Mobile</th>
+    <th>Delivery Address</th>
+    <th>Seller Name</th>
+    <th>Seller ID</th>
+    <th>Product</th>
+    <th>Quantity</th>
+    <th>Amount</th>
+    <th>UTR</th>
+    <th>Payment Status</th>
+    <th>Order Status</th>
+    <th>Courier</th>
+    <th>Tracking Number</th>
+    <th>Tracking URL</th>
+    <th>Tracking Details</th>
+    <th>Order Date</th>
+   </tr></thead><tbody>`;
+
+  orders.forEach(order=>{
+   const orderItems = itemMap[order.id] || [];
+
+   const productNames = orderItems
+    .map(i=>escapeHTML(i.product_name||"-")).join("<br>");
+
+   const quantities = orderItems
+    .map(i=>escapeHTML(i.quantity||0)).join("<br>");
+
+   const address = [
+    order.delivery_address,
+    order.pin_code ? "PIN: "+order.pin_code : ""
+   ].filter(Boolean).join(", ");
+
+   html += `<tr>
+    <td>${escapeHTML(order.order_number||order.id)}</td>
+    <td>${escapeHTML(order.customer_name||"-")}</td>
+    <td>${escapeHTML(order.customer_mobile||"-")}</td>
+    <td>${escapeHTML(address||"-")}</td>
+    <td>${escapeHTML(sellerMap[order.seller_id]||"Name unavailable")}</td>
+    <td>${escapeHTML(order.seller_id||"-")}</td>
+    <td>${productNames||"-"}</td>
+    <td>${quantities||"-"}</td>
+    <td>₹${Number(order.subtotal||0).toFixed(2)}</td>
+    <td>${escapeHTML(order.payment_utr||"-")}</td>
+    <td>${escapeHTML(order.payment_status||"-")}</td>
+    <td>${escapeHTML(order.order_status||"-")}</td>
+    <td>${escapeHTML(order.courier_name||"-")}</td>
+    <td>${escapeHTML(order.tracking_number||"-")}</td>
+    <td>${order.tracking_url
+  ? '<a href="' + escapeHTML(order.tracking_url) + '" target="_blank" rel="noopener">Open Tracking</a>'
+  : "-"}</td>
+    <td>${escapeHTML(order.tracking_details||"-")}</td>
+    <td>${escapeHTML(order.created_at ? new Date(order.created_at).toLocaleString() : "-")}</td>
+   </tr>`;
+  });
+
+  html += "</tbody></table>";
+  output.innerHTML = html;
+
+ }catch(error){
+  output.textContent = "Could not load VIKKA orders: "+error.message;
+ }
+}
+
+
 // GENERIC TABLE VIEW
 async function loadTable(table){
  if(!currentUser) return;
 
- const output = el(table+"Data");
+ const outputId = table==="store_order_items"
+  ? "order_itemsData"
+  : table+"Data";
+
+ const output = el(outputId);
  output.innerHTML = "Loading...";
 
  try{
