@@ -303,28 +303,113 @@ async function loadDashboard(user){
 }
 
 /* LOAD THIS SELLER'S CUSTOMER ORDERS */
-async function loadOrders(){
-    const tbody = document.getElementById("ordersTable");
+/* LOAD THIS SELLER'S CUSTOMER ORDERS */
 
-    if(!tbody || !sellerProfile){
+async function updateSellerOrder(orderId, changes, message){
+    try{
+        const result = await db
+            .from("store_orders")
+            .update({
+                ...changes,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", orderId)
+            .eq("seller_id", sellerProfile.id)
+            .select("id")
+            .maybeSingle();
+
+        if(result.error) throw result.error;
+        if(!result.data) throw new Error("Order update not permitted.");
+
+        alert(message);
+        await loadOrders();
+
+    }catch(error){
+        alert("Update failed: " + error.message);
+    }
+}
+
+async function verifyOrderPayment(orderId, decision){
+    const question = decision === "verified"
+        ? "Have you checked your bank/UPI and confirmed payment received?"
+        : "Are you sure you want to reject this payment?";
+
+    if(!confirm(question)) return;
+
+    const changes = {payment_status: decision};
+
+    if(decision === "rejected"){
+        changes.order_status = "cancelled";
+    }
+
+    await updateSellerOrder(
+        orderId,
+        changes,
+        decision === "verified"
+            ? "Payment verified successfully."
+            : "Payment rejected."
+    );
+}
+
+async function updateOrderDecision(orderId, decision){
+    if(!confirm(
+        decision === "accepted"
+            ? "Accept this customer order?"
+            : "Reject this customer order?"
+    )) return;
+
+    await updateSellerOrder(
+        orderId,
+        {
+            order_status: decision === "accepted"
+                ? "accepted"
+                : "cancelled"
+        },
+        decision === "accepted"
+            ? "Order accepted."
+            : "Order rejected."
+    );
+}
+
+async function saveOrderTracking(orderId){
+    const field = document.getElementById("tracking_" + orderId);
+    const details = field ? field.value.trim() : "";
+    const words = details.match(/\S+/g) || [];
+
+    if(words.length > 70){
+        alert("Maximum 70 words allowed.");
         return;
     }
 
-    tbody.innerHTML = "<tr><td colspan='9'>Loading orders...</td></tr>";
+    await updateSellerOrder(
+        orderId,
+        {tracking_details: details},
+        "Tracking details saved."
+    );
+}
+
+async function loadOrders(){
+    const tbody = document.getElementById("ordersTable");
+
+    if(!tbody || !sellerProfile) return;
+
+    tbody.innerHTML =
+        "<tr><td colspan='9'>Loading orders...</td></tr>";
 
     try{
         const result = await db
             .from("store_orders")
-            .select("id,order_number,seller_id,customer_name,customer_mobile,delivery_address,pin_code,subtotal,payment_utr,payment_status,order_status,created_at")
-            .eq("seller_id",sellerProfile.id)
-            .order("created_at",{ascending:false});
+            .select("id,order_number,seller_id,customer_name,customer_mobile,delivery_address,pin_code,subtotal,payment_utr,payment_status,order_status,tracking_details,created_at")
+            .eq("seller_id", sellerProfile.id)
+            .order("created_at", {ascending:false});
 
         if(result.error) throw result.error;
 
         const orders = result.data || [];
 
         if(orders.length === 0){
-            tbody.innerHTML = "<tr><td colspan='9'>No customer orders found.</td></tr>";
+            tbody.innerHTML =
+                "<tr><td colspan='9'>No customer orders found.</td></tr>";
             return;
         }
 
@@ -335,18 +420,21 @@ async function loadOrders(){
         const itemsResult = await db
             .from("store_order_items")
             .select("order_id,product_name,quantity,unit_price")
-            .in("order_id",orderIds);
+            .in("order_id", orderIds);
 
         if(itemsResult.error) throw itemsResult.error;
 
         const items = itemsResult.data || [];
 
         tbody.innerHTML = orders.map(function(order){
+
+            const id = escapeHtml(order.id);
+
             const orderItems = items.filter(function(item){
                 return item.order_id === order.id;
             });
 
-            const productNames = orderItems.map(function(item){
+            const products = orderItems.map(function(item){
                 return escapeHtml(item.product_name) +
                     " (₹" + Number(item.unit_price || 0).toFixed(2) + ")";
             }).join("<br>") || "-";
@@ -359,6 +447,43 @@ async function loadOrders(){
                 (order.delivery_address || "") +
                 (order.pin_code ? ", PIN: " + order.pin_code : "");
 
+            const payment =
+                String(order.payment_status || "pending").toLowerCase();
+
+            const status =
+                String(order.order_status || "pending").toLowerCase();
+
+            let paymentActions = "";
+
+            if(payment === "pending"){
+                paymentActions =
+                    "<br><button onclick=\"verifyOrderPayment('" +
+                    id + "','verified')\">Verify Payment</button>" +
+                    " <button class='logout' onclick=\"verifyOrderPayment('" +
+                    id + "','rejected')\">Reject Payment</button>";
+            }
+
+            let orderActions = "";
+
+            if(status === "pending" && payment === "verified"){
+                orderActions =
+                    "<br><button onclick=\"updateOrderDecision('" +
+                    id + "','accepted')\">Accept Order</button>" +
+                    " <button class='logout' onclick=\"updateOrderDecision('" +
+                    id + "','rejected')\">Reject Order</button>";
+            }else if(status === "pending"){
+                orderActions =
+                    "<br><small>Verify payment before accepting.</small>";
+            }
+
+            const tracking =
+                "<br><textarea id='tracking_" + id +
+                "' rows='3' placeholder='Courier name, tracking number and website. Maximum 70 words'>" +
+                escapeHtml(order.tracking_details || "") +
+                "</textarea>" +
+                "<button onclick=\"saveOrderTracking('" + id +
+                "')\">Save Tracking Details</button>";
+
             const date = order.created_at
                 ? new Date(order.created_at).toLocaleString("en-IN")
                 : "-";
@@ -366,17 +491,21 @@ async function loadOrders(){
             return "<tr>" +
                 "<td>" + escapeHtml(order.order_number || "-") +
                 "<br><small>" + escapeHtml(date) + "</small></td>" +
-                "<td>" + productNames + "</td>" +
+                "<td>" + products + "</td>" +
                 "<td>" + quantities + "</td>" +
                 "<td>" + escapeHtml(order.customer_name || "-") + "</td>" +
                 "<td>" + escapeHtml(order.customer_mobile || "-") + "</td>" +
                 "<td>" + escapeHtml(address || "-") + "</td>" +
                 "<td>₹" + Number(order.subtotal || 0).toFixed(2) + "</td>" +
-                "<td>" + escapeHtml(order.payment_status || "pending") +
-                (order.payment_utr ? "<br>UTR: " + escapeHtml(order.payment_utr) : "") +
-                "</td>" +
-                "<td>" + escapeHtml(order.order_status || "pending") + "</td>" +
+                "<td>" + escapeHtml(payment) +
+                (order.payment_utr
+                    ? "<br>UTR: " + escapeHtml(order.payment_utr)
+                    : "") +
+                paymentActions + "</td>" +
+                "<td>" + escapeHtml(status) +
+                orderActions + tracking + "</td>" +
                 "</tr>";
+
         }).join("");
 
     }catch(error){
