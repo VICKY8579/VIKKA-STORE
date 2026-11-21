@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#142b4a">
 <meta name="description" content="VIKKA Store - Your Online Shopping Partner">
 <title>VIKKA Store | Online Shopping</title>
+  <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -725,5 +727,13 @@ saveCart();
 loadProducts();
 
 </script>
-</body>
+
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js");
+  });
+}
+</script>
+  </body>
 </html>
