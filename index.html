@@ -537,30 +537,11 @@ openOverlay('detailOverlay');
 }
 
 function checkout(){
-if(!cart.length)return;
-
-const lines=cart.map((p,i)=>
-`${i+1}. ${productName(p)} × ${p.quantity} — `+
-(productPrice(p)===null
-?'Price to confirm'
-:money(Number(productPrice(p))*p.quantity))
-);
-
-const total=cart.reduce((s,p)=>{
-const value=productPrice(p);
-const n=value===null?NaN:Number(value);
-return s+(Number.isFinite(n)?n*p.quantity:0);
-},0);
-
-const msg='Hello VIKKA Store, I want to place an order:\n'+
-lines.join('\n')+
-'\nTotal: '+money(total)+
-'\nPlease confirm availability and delivery.';
-
-window.open(
-'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),
-'_blank'
-);
+  if(!cart.length){
+    alert('Your cart is empty.');
+    return;
+  }
+  window.location.href = 'checkout.html';
 }
 
 function updateAccountUI(){
