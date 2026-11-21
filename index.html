@@ -720,4 +720,29 @@ updateAccountUI();
 if(authMode==='signup'&&!currentSession){
 alert('Registration submitted. Check your email to confirm your account.');
 }else{
-ale
+alert('Login successful.');
+}
+});
+
+$('logoutBtn').addEventListener('click',async()=>{
+  if(!db)return;
+
+  const {error}=await db.auth.signOut();
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  currentSession=null;
+  authMode='login';
+  updateAccountUI();
+});
+
+$('year').textContent=new Date().getFullYear();
+saveCart();
+loadProducts();
+
+</script>
+</body>
+</html>
