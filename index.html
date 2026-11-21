@@ -7,6 +7,7 @@
 <meta name="description" content="VIKKA Store - Your Online Shopping Partner">
 <title>VIKKA Store | Online Shopping</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root{--navy:#142b4a;--blue:#2874a6;--orange:#ffbd45;--bg:#f5f7fa;--green:#087443}
 *{box-sizing:border-box}
@@ -64,15 +65,19 @@ h2{color:var(--navy);margin:22px 0 12px}
 .wide{width:100%;margin-top:10px}
 .detail-img{width:100%;height:230px;object-fit:contain;background:#f4f5f7;border-radius:8px}
 @media(max-width:520px){
-.brand-name{font-size:21px}.brand img{width:45px;height:45px}
-.hero{padding:23px 18px}.hero h1{font-size:24px}
+.brand-name{font-size:21px}
+.brand img{width:45px;height:45px}
+.hero{padding:23px 18px}
+.hero h1{font-size:24px}
 .hero-mark{font-size:42px}
 .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.product-card{padding:9px}.product-image{height:135px}
+.product-card{padding:9px}
+.product-image{height:135px}
 .card-actions{flex-direction:column}
 }
 </style>
 </head>
+
 <body>
 
 <header class="site-header">
@@ -113,8 +118,10 @@ h2{color:var(--navy);margin:22px 0 12px}
 <main>
 <h2>Shop by Category</h2>
 <div id="categories" class="category-list"></div>
+
 <h2 id="allProducts">All Products</h2>
 <p class="muted">Explore products available at VIKKA Store.</p>
+
 <div id="productGrid" class="product-grid">
 <div class="status">Loading products...</div>
 </div>
@@ -130,7 +137,10 @@ h2{color:var(--navy);margin:22px 0 12px}
 
 <div class="overlay" id="cartOverlay">
 <div class="panel">
-<div class="panel-head"><h2>Your Cart</h2><button class="close" data-close="cartOverlay">×</button></div>
+<div class="panel-head">
+<h2>Your Cart</h2>
+<button class="close" data-close="cartOverlay">×</button>
+</div>
 <div id="cartItems"></div>
 <div id="cartTotal" style="font-weight:800;text-align:right;margin-top:14px"></div>
 <button class="btn btn-orange wide" id="checkoutBtn">Order on WhatsApp</button>
@@ -139,13 +149,24 @@ h2{color:var(--navy);margin:22px 0 12px}
 
 <div class="overlay" id="accountOverlay">
 <div class="panel">
-<div class="panel-head"><h2 id="accountTitle">Customer Login</h2><button class="close" data-close="accountOverlay">×</button></div>
+<div class="panel-head">
+<h2 id="accountTitle">Customer Login</h2>
+<button class="close" data-close="accountOverlay">×</button>
+</div>
 <p id="accountMessage" class="muted"></p>
+
 <form id="accountForm">
-<div class="form-field"><label for="email">Email</label><input id="email" type="email" required></div>
-<div class="form-field"><label for="password">Password</label><input id="password" type="password" required minlength="6"></div>
+<div class="form-field">
+<label for="email">Email</label>
+<input id="email" type="email" required>
+</div>
+<div class="form-field">
+<label for="password">Password</label>
+<input id="password" type="password" required minlength="6">
+</div>
 <button class="btn btn-blue wide" type="submit" id="accountSubmit">Login</button>
 </form>
+
 <button class="btn btn-outline wide" id="toggleAuth">Create new account</button>
 <button class="btn btn-light wide" id="logoutBtn" style="display:none">Logout</button>
 </div>
@@ -153,10 +174,15 @@ h2{color:var(--navy);margin:22px 0 12px}
 
 <div class="overlay" id="detailOverlay">
 <div class="panel">
-<div class="panel-head"><h2>Product Details</h2><button class="close" data-close="detailOverlay">×</button></div>
+<div class="panel-head">
+<h2>Product Details</h2>
+<button class="close" data-close="detailOverlay">×</button>
+</div>
 <div id="detailContent"></div>
 </div>
-</div><script>
+</div>
+
+<script>
 'use strict';
 
 const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
@@ -164,6 +190,7 @@ const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
 const WHATSAPP_NUMBER='918579970090';
 
 const $=id=>document.getElementById(id);
+
 let db=null;
 let allProducts=[];
 let selectedCategory='All';
@@ -172,363 +199,471 @@ let authMode='login';
 let currentSession=null;
 
 try{
- cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
- if(!Array.isArray(cart))cart=[];
-}catch{cart=[];}
+cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
+if(!Array.isArray(cart))cart=[];
+}catch{
+cart=[];
+}
 
 function money(value){
- const n=Number(value);
- return Number.isFinite(n)?'₹'+n.toLocaleString('en-IN'):'Price unavailable';
+const n=Number(value);
+return Number.isFinite(n)?'₹'+n.toLocaleString('en-IN'):'Price unavailable';
 }
 
 function productName(p){
- return String(p.name||p.title||p.product_name||'Product');
+return String(p.name||p.title||p.product_name||'Product');
 }
 
 function productPrice(p){
- const v=p.price??p.selling_price;
- return v===null||v===undefined||v===''?null:v;
+const v=p.price??p.selling_price;
+return v===null||v===undefined||v===''?null:v;
 }
 
 function imageUrl(p){
- const v=p.image_url||p.image||p.photo||'';
- if(!v)return '';
- try{
-  const u=new URL(String(v),location.href);
-  return ['https:','http:'].includes(u.protocol)?u.href:'';
- }catch{return '';}
+const v=p.image_url||p.image||p.photo||'';
+if(!v)return '';
+try{
+const u=new URL(String(v),location.href);
+return ['https:','http:'].includes(u.protocol)?u.href:'';
+}catch{
+return '';
+}
 }
 
 function fallbackImage(){
- return 'data:image/svg+xml;charset=UTF-8,'+
- encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#f1f4f8"/><text x="300" y="205" text-anchor="middle" font-size="34" fill="#64748b" font-family="Arial">VIKKA Store</text></svg>');
+return 'data:image/svg+xml;charset=UTF-8,'+
+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#f1f4f8"/><text x="300" y="205" text-anchor="middle" font-size="34" fill="#64748b" font-family="Arial">VIKKA Store</text></svg>');
 }
 
 function saveCart(){
- localStorage.setItem('vikka_cart',JSON.stringify(cart));
- $('cartCount').textContent=cart.reduce((n,x)=>n+(Number(x.quantity)||1),0);
+localStorage.setItem('vikka_cart',JSON.stringify(cart));
+$('cartCount').textContent=cart.reduce((n,x)=>n+(Number(x.quantity)||1),0);
 }
 
 function showStatus(message,retry=false){
- $('productGrid').replaceChildren();
- const d=document.createElement('div');
- d.className='status';
- d.textContent=message;
- $('productGrid').appendChild(d);
- if(retry){
-  const b=document.createElement('button');
-  b.className='btn btn-blue';
-  b.textContent='Try Again';
-  b.style.marginTop='12px';
-  b.addEventListener('click',loadProducts);
-  $('productGrid').appendChild(b);
- }
+$('productGrid').replaceChildren();
+
+const d=document.createElement('div');
+d.className='status';
+d.textContent=message;
+$('productGrid').appendChild(d);
+
+if(retry){
+const b=document.createElement('button');
+b.className='btn btn-blue';
+b.textContent='Try Again';
+b.style.marginTop='12px';
+b.addEventListener('click',loadProducts);
+$('productGrid').appendChild(b);
+}
 }
 
-function openOverlay(id){$(id).classList.add('show');}
-function closeOverlay(id){$(id).classList.remove('show');}
+function openOverlay(id){
+$(id).classList.add('show');
+}
+
+function closeOverlay(id){
+$(id).classList.remove('show');
+}
 
 document.querySelectorAll('[data-close]').forEach(b=>{
- b.addEventListener('click',()=>closeOverlay(b.dataset.close));
+b.addEventListener('click',()=>closeOverlay(b.dataset.close));
 });
 
 document.querySelectorAll('.overlay').forEach(o=>{
- o.addEventListener('click',e=>{
-  if(e.target===o)closeOverlay(o.id);
- });
+o.addEventListener('click',e=>{
+if(e.target===o)closeOverlay(o.id);
+});
 });
 
 function buildCategories(){
- const names=['All',...new Set(allProducts.map(p=>String(p.category||'').trim()).filter(Boolean))];
- $('categories').replaceChildren();
+const names=['All',...new Set(
+allProducts.map(p=>String(p.category||'').trim()).filter(Boolean)
+)];
 
- names.forEach(name=>{
-  const b=document.createElement('button');
-  b.className='category'+(selectedCategory===name?' active':'');
-  b.textContent=name==='All'?'All Products':name;
-  b.addEventListener('click',()=>{
-   selectedCategory=name;
-   buildCategories();
-   renderProducts();
-  });
-  $('categories').appendChild(b);
- });
+$('categories').replaceChildren();
+
+names.forEach(name=>{
+const b=document.createElement('button');
+b.className='category'+(selectedCategory===name?' active':'');
+b.textContent=name==='All'?'All Products':name;
+
+b.addEventListener('click',()=>{
+selectedCategory=name;
+buildCategories();
+renderProducts();
+});
+
+$('categories').appendChild(b);
+});
 }
 
 function createCard(p){
- const card=document.createElement('article');
- card.className='product-card';
+const card=document.createElement('article');
+card.className='product-card';
 
- const img=document.createElement('img');
- img.className='product-image';
- img.src=imageUrl(p)||fallbackImage();
- img.alt=productName(p);
- img.loading='lazy';
- img.onerror=()=>{img.onerror=null;img.src=fallbackImage();};
- card.appendChild(img);
+const img=document.createElement('img');
+img.className='product-image';
+img.src=imageUrl(p)||fallbackImage();
+img.alt=productName(p);
+img.loading='lazy';
+img.onerror=()=>{
+img.onerror=null;
+img.src=fallbackImage();
+};
+card.appendChild(img);
 
- const h=document.createElement('h3');
- h.textContent=productName(p);
- card.appendChild(h);
+const h=document.createElement('h3');
+h.textContent=productName(p);
+card.appendChild(h);
 
- if(p.brand){
-  const brand=document.createElement('div');
-  brand.className='muted';
-  brand.textContent=String(p.brand);
-  card.appendChild(brand);
- }
+if(p.brand){
+const brand=document.createElement('div');
+brand.className='muted';
+brand.textContent=String(p.brand);
+card.appendChild(brand);
+}
 
- const price=document.createElement('div');
- price.className='price';
- const pv=productPrice(p);
- price.textContent=pv===null?'Price unavailable':money(pv);
+const price=document.createElement('div');
+price.className='price';
 
- if(p.mrp&&pv!==null&&Number(p.mrp)>Number(pv)){
-  const mrp=document.createElement('span');
-  mrp.className='mrp';
-  mrp.textContent=money(p.mrp);
-  price.appendChild(mrp);
- }
- card.appendChild(price);
+const pv=productPrice(p);
+price.textContent=pv===null?'Price unavailable':money(pv);
 
- if(p.stock!==undefined&&p.stock!==null){
-  const s=document.createElement('p');
-  s.className='muted';
-  s.textContent=Number(p.stock)>0?'In stock':'Currently unavailable';
-  card.appendChild(s);
- }
+if(p.mrp&&pv!==null&&Number(p.mrp)>Number(pv)){
+const mrp=document.createElement('span');
+mrp.className='mrp';
+mrp.textContent=money(p.mrp);
+price.appendChild(mrp);
+}
 
- const actions=document.createElement('div');
- actions.className='card-actions';
+card.appendChild(price);
 
- const details=document.createElement('button');
- details.className='btn btn-outline';
- details.textContent='View Details';
- details.addEventListener('click',()=>showDetails(p));
+if(p.stock!==undefined&&p.stock!==null){
+const s=document.createElement('p');
+s.className='muted';
+s.textContent=Number(p.stock)>0?'In stock':'Currently unavailable';
+card.appendChild(s);
+}
 
- const add=document.createElement('button');
- add.className='btn btn-blue';
- add.textContent='Add to Cart';
- add.disabled=p.stock!==undefined&&Number(p.stock)<=0;
- add.addEventListener('click',()=>addToCart(p));
+const actions=document.createElement('div');
+actions.className='card-actions';
 
- actions.append(details,add);
- card.appendChild(actions);
- return card;
+const details=document.createElement('button');
+details.className='btn btn-outline';
+details.textContent='View Details';
+details.addEventListener('click',()=>showDetails(p));
+
+const add=document.createElement('button');
+add.className='btn btn-blue';
+add.textContent='Add to Cart';
+add.disabled=p.stock!==undefined&&Number(p.stock)<=0;
+add.addEventListener('click',()=>addToCart(p));
+
+actions.append(details,add);
+card.appendChild(actions);
+
+return card;
 }
 
 function renderProducts(){
- const term=$('search').value.trim().toLowerCase();
+const term=$('search').value.trim().toLowerCase();
 
- // All existing database products are displayed.
- // No is_active filter is applied here.
- let visible=allProducts.filter(p=>{
-  const category=String(p.category||'');
-  const hay=[productName(p),p.description||'',category,p.brand||''].join(' ').toLowerCase();
-  return(selectedCategory==='All'||category===selectedCategory)&&hay.includes(term);
- });
+let visible=allProducts.filter(p=>{
+const category=String(p.category||'');
+const hay=[
+productName(p),
+p.description||'',
+category,
+p.brand||''
+].join(' ').toLowerCase();
 
- const sort=$('sortProducts').value;
- visible.sort((a,b)=>{
-  if(sort==='low')return(Number(productPrice(a))||0)-(Number(productPrice(b))||0);
-  if(sort==='high')return(Number(productPrice(b))||0)-(Number(productPrice(a))||0);
-  if(sort==='name')return productName(a).localeCompare(productName(b));
-  return 0;
- });
+return (selectedCategory==='All'||category===selectedCategory)&&hay.includes(term);
+});
 
- $('productGrid').replaceChildren();
+const sort=$('sortProducts').value;
 
- if(!visible.length){
-  showStatus(allProducts.length?'No products found.':'No products available yet.');
-  return;
- }
+visible.sort((a,b)=>{
+if(sort==='low'){
+return (Number(productPrice(a))||0)-(Number(productPrice(b))||0);
+}
+if(sort==='high'){
+return (Number(productPrice(b))||0)-(Number(productPrice(a))||0);
+}
+if(sort==='name'){
+return productName(a).localeCompare(productName(b));
+}
+return 0;
+});
 
- visible.forEach(p=>$('productGrid').appendChild(createCard(p)));
-}function addToCart(p){
- if(p.stock!==undefined&&Number(p.stock)<=0){
-  alert('This product is currently unavailable.');
-  return;
- }
+$('productGrid').replaceChildren();
 
- const id=p.id??productName(p);
- const found=cart.find(x=>String(x.id??x.name)===String(id));
+if(!visible.length){
+showStatus(allProducts.length?'No products found.':'No products available yet.');
+return;
+}
 
- if(found)found.quantity=(Number(found.quantity)||1)+1;
- else cart.push({...p,quantity:1});
+visible.forEach(p=>{
+$('productGrid').appendChild(createCard(p));
+});
+}
 
- saveCart();
- alert(productName(p)+' added to cart.');
+function addToCart(p){
+if(p.stock!==undefined&&Number(p.stock)<=0){
+alert('This product is currently unavailable.');
+return;
+}
+
+const id=p.id??productName(p);
+const found=cart.find(x=>String(x.id??x.name)===String(id));
+
+if(found){
+found.quantity=(Number(found.quantity)||1)+1;
+}else{
+cart.push({...p,quantity:1});
+}
+
+saveCart();
+alert(productName(p)+' added to cart.');
 }
 
 function changeQty(index,delta){
- if(!cart[index])return;
- cart[index].quantity=(Number(cart[index].quantity)||1)+delta;
- if(cart[index].quantity<=0)cart.splice(index,1);
- saveCart();
- renderCart();
+if(!cart[index])return;
+
+cart[index].quantity=(Number(cart[index].quantity)||1)+delta;
+
+if(cart[index].quantity<=0){
+cart.splice(index,1);
+}
+
+saveCart();
+renderCart();
 }
 
 function renderCart(){
- $('cartItems').replaceChildren();
+$('cartItems').replaceChildren();
 
- if(!cart.length){
-  const empty=document.createElement('div');
-  empty.className='status';
-  empty.textContent='Your cart is empty.';
-  $('cartItems').appendChild(empty);
-  $('cartTotal').textContent='';
-  $('checkoutBtn').disabled=true;
-  return;
- }
+if(!cart.length){
+const empty=document.createElement('div');
+empty.className='status';
+empty.textContent='Your cart is empty.';
+$('cartItems').appendChild(empty);
+$('cartTotal').textContent='';
+$('checkoutBtn').disabled=true;
+return;
+}
 
- $('checkoutBtn').disabled=false;
- let total=0;
+$('checkoutBtn').disabled=false;
+let total=0;
 
- cart.forEach((p,i)=>{
-  const row=document.createElement('div');
-  row.className='cart-row';
+cart.forEach((p,i)=>{
+const row=document.createElement('div');
+row.className='cart-row';
 
-  const info=document.createElement('div');
-  const name=document.createElement('strong');
-  name.textContent=productName(p);
+const info=document.createElement('div');
 
-  const sub=document.createElement('div');
-  sub.className='muted';
-  const pr=Number(productPrice(p));
-  sub.textContent=(Number.isFinite(pr)?money(pr):'Price unavailable')+' × '+p.quantity;
+const name=document.createElement('strong');
+name.textContent=productName(p);
 
-  info.append(name,sub);
+const sub=document.createElement('div');
+sub.className='muted';
 
-  const controls=document.createElement('div');
-  controls.className='qty';
+const priceValue=productPrice(p);
+const pr=priceValue===null?NaN:Number(priceValue);
 
-  [['−',-1],['+',1]].forEach(([label,delta])=>{
-   const b=document.createElement('button');
-   b.textContent=label;
-   b.addEventListener('click',()=>changeQty(i,delta));
-   controls.appendChild(b);
-  });
+sub.textContent=(Number.isFinite(pr)?money(pr):'Price unavailable')+' × '+p.quantity;
 
-  row.append(info,controls);
-  $('cartItems').appendChild(row);
+info.append(name,sub);
 
-  if(Number.isFinite(pr))total+=pr*p.quantity;
- });
+const controls=document.createElement('div');
+controls.className='qty';
 
- $('cartTotal').textContent='Total: '+money(total);
+[['−',-1],['+',1]].forEach(([label,delta])=>{
+const b=document.createElement('button');
+b.textContent=label;
+b.addEventListener('click',()=>changeQty(i,delta));
+controls.appendChild(b);
+});
+
+row.append(info,controls);
+$('cartItems').appendChild(row);
+
+if(Number.isFinite(pr)){
+total+=pr*p.quantity;
+}
+});
+
+$('cartTotal').textContent='Total: '+money(total);
 }
 
 function showDetails(p){
- $('detailContent').replaceChildren();
+$('detailContent').replaceChildren();
 
- const src=imageUrl(p);
- if(src){
-  const img=document.createElement('img');
-  img.className='detail-img';
-  img.src=src;
-  img.alt=productName(p);
-  img.onerror=()=>{img.onerror=null;img.src=fallbackImage();};
-  $('detailContent').appendChild(img);
- }
+const src=imageUrl(p);
 
- const h=document.createElement('h3');
- h.textContent=productName(p);
+if(src){
+const img=document.createElement('img');
+img.className='detail-img';
+img.src=src;
+img.alt=productName(p);
+img.onerror=()=>{
+img.onerror=null;
+img.src=fallbackImage();
+};
+$('detailContent').appendChild(img);
+}
 
- const price=document.createElement('div');
- price.className='price';
- price.textContent=productPrice(p)===null?'Price unavailable':money(productPrice(p));
+const h=document.createElement('h3');
+h.textContent=productName(p);
 
- const desc=document.createElement('p');
- desc.textContent=String(p.description||'Product details will be updated soon.');
+const price=document.createElement('div');
+price.className='price';
+price.textContent=productPrice(p)===null?'Price unavailable':money(productPrice(p));
 
- const b=document.createElement('button');
- b.className='btn btn-blue wide';
- b.textContent='Add to Cart';
- b.addEventListener('click',()=>{
-  addToCart(p);
-  closeOverlay('detailOverlay');
- });
+const desc=document.createElement('p');
+desc.textContent=String(p.description||'Product details will be updated soon.');
 
- $('detailContent').append(h,price,desc,b);
- openOverlay('detailOverlay');
+const b=document.createElement('button');
+b.className='btn btn-blue wide';
+b.textContent='Add to Cart';
+
+b.addEventListener('click',()=>{
+addToCart(p);
+closeOverlay('detailOverlay');
+});
+
+$('detailContent').append(h,price,desc,b);
+openOverlay('detailOverlay');
 }
 
 function checkout(){
- if(!cart.length)return;
+if(!cart.length)return;
 
- const lines=cart.map((p,i)=>
-  `${i+1}. ${productName(p)} × ${p.quantity} — `+
-  (productPrice(p)===null?'Price to confirm':money(Number(productPrice(p))*p.quantity))
- );
+const lines=cart.map((p,i)=>
+`${i+1}. ${productName(p)} × ${p.quantity} — `+
+(productPrice(p)===null
+?'Price to confirm'
+:money(Number(productPrice(p))*p.quantity))
+);
 
- const total=cart.reduce((s,p)=>{
-  const n=Number(productPrice(p));
-  return s+(Number.isFinite(n)?n*p.quantity:0);
- },0);
+const total=cart.reduce((s,p)=>{
+const value=productPrice(p);
+const n=value===null?NaN:Number(value);
+return s+(Number.isFinite(n)?n*p.quantity:0);
+},0);
 
- const msg='Hello VIKKA Store, I want to place an order:\n'+
- lines.join('\n')+
- '\nTotal: '+money(total)+
- '\nPlease confirm availability and delivery.';
+const msg='Hello VIKKA Store, I want to place an order:\n'+
+lines.join('\n')+
+'\nTotal: '+money(total)+
+'\nPlease confirm availability and delivery.';
 
- window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),'_blank');
+window.open(
+'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),
+'_blank'
+);
 }
 
 function updateAccountUI(){
- if(currentSession){
-  $('accountBtn').textContent='My Account';
-  $('accountTitle').textContent='You are logged in';
-  $('accountMessage').textContent=currentSession.user.email||'Customer account';
-  $('accountForm').style.display='none';
-  $('toggleAuth').style.display='none';
-  $('logoutBtn').style.display='block';
- }else{
-  $('accountBtn').textContent='Login';
-  $('accountTitle').textContent=authMode==='login'?'Customer Login':'Create Account';
-  $('accountMessage').textContent=authMode==='login'?'Login to your VIKKA customer account.':'Register with your email and a password.';
-  $('accountForm').style.display='block';
-  $('toggleAuth').style.display='block';
-  $('toggleAuth').textContent=authMode==='login'?'Create new account':'Already have an account? Login';
-  $('accountSubmit').textContent=authMode==='login'?'Login':'Create Account';
-  $('logoutBtn').style.display='none';
- }
+if(currentSession){
+$('accountBtn').textContent='My Account';
+$('accountTitle').textContent='You are logged in';
+$('accountMessage').textContent=currentSession.user.email||'Customer account';
+$('accountForm').style.display='none';
+$('toggleAuth').style.display='none';
+$('logoutBtn').style.display='block';
+}else{
+$('accountBtn').textContent='Login';
+$('accountTitle').textContent=authMode==='login'?'Customer Login':'Create Account';
+
+$('accountMessage').textContent=authMode==='login'
+?'Login to your VIKKA customer account.'
+:'Register with your email and a password.';
+
+$('accountForm').style.display='block';
+$('toggleAuth').style.display='block';
+
+$('toggleAuth').textContent=authMode==='login'
+?'Create new account'
+:'Already have an account? Login';
+
+$('accountSubmit').textContent=authMode==='login'?'Login':'Create Account';
+$('logoutBtn').style.display='none';
+}
+
 }
 
 async function loadProducts(){
- showStatus('Loading products...');
+showStatus('Loading products...');
 
- if(!window.supabase?.createClient){
-  showStatus('Internet or Supabase library not available. Tap Try Again.',true);
-  return;
- }
+if(!window.supabase?.createClient){
+showStatus('Internet or Supabase library not available. Tap Try Again.',true);
+return;
+}
 
- try{
-  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+try{
 
-  const {data,error}=await db.from('products').select('*');
-  if(error)throw error;
+// Create the Supabase connection only once.
+if(!db){
+db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+}
 
-  allProducts=Array.isArray(data)?data:[];
-  buildCategories();
-  renderProducts();
+// Load the existing products.
+const {data:oldProducts,error:oldError}=await db
+.from('products')
+.select('*');
 
-  const {data:sessionData,error:sessionError}=await db.auth.getSession();
-  if(sessionError)console.warn(sessionError.message);
+if(oldError)throw oldError;
 
-  currentSession=sessionData?.session||null;
-  updateAccountUI();
+// Load only approved seller products.
+let sellerProducts=[];
 
-  if(!window.__vikkaAuthListener){
-   window.__vikkaAuthListener=true;
-   db.auth.onAuthStateChange((_event,session)=>{
-    currentSession=session;
-    updateAccountUI();
-   });
-  }
- }catch(err){
-  console.error('VIKKA error:',err);
-  showStatus('Products load nahi hue: '+(err.message||'Supabase connection check karein.'),true);
- }
+const {data:sellerData,error:sellerError}=await db
+.from('seller_products')
+.select('*')
+.eq('status','approved');
+
+if(sellerError){
+console.warn('Seller products could not be loaded:',sellerError.message);
+}else{
+sellerProducts=Array.isArray(sellerData)?sellerData:[];
+}
+
+// Combine both product lists.
+allProducts=[
+...(Array.isArray(oldProducts)?oldProducts:[]),
+...sellerProducts
+];
+
+buildCategories();
+renderProducts();
+
+// Load customer login session.
+const {data:sessionData,error:sessionError}=await db.auth.getSession();
+
+if(sessionError){
+console.warn(sessionError.message);
+}
+
+currentSession=sessionData?.session||null;
+updateAccountUI();
+
+// Attach the authentication listener only once.
+if(!window.__vikkaAuthListener){
+window.__vikkaAuthListener=true;
+
+db.auth.onAuthStateChange((_event,session)=>{
+currentSession=session;
+updateAccountUI();
+});
+}
+
+}catch(err){
+console.error('VIKKA error:',err);
+showStatus(
+'Products load nahi hue: '+(err.message||'Supabase connection check karein.'),
+true
+);
+}
 }
 
 $('search').addEventListener('input',renderProducts);
@@ -536,78 +671,53 @@ $('sortProducts').addEventListener('change',renderProducts);
 $('refreshBtn').addEventListener('click',loadProducts);
 
 $('cartBtn').addEventListener('click',()=>{
- renderCart();
- openOverlay('cartOverlay');
+renderCart();
+openOverlay('cartOverlay');
 });
 
 $('checkoutBtn').addEventListener('click',checkout);
 
 $('accountBtn').addEventListener('click',()=>{
- updateAccountUI();
- openOverlay('accountOverlay');
+updateAccountUI();
+openOverlay('accountOverlay');
 });
 
 $('toggleAuth').addEventListener('click',()=>{
- authMode=authMode==='login'?'signup':'login';
- updateAccountUI();
+authMode=authMode==='login'?'signup':'login';
+updateAccountUI();
 });
 
 $('accountForm').addEventListener('submit',async e=>{
- e.preventDefault();
+e.preventDefault();
 
- if(!db){
-  alert('Store connection is not ready.');
-  return;
- }
+if(!db){
+alert('Store connection is not ready.');
+return;
+}
 
- const email=$('email').value.trim();
- const password=$('password').value;
+const email=$('email').value.trim();
+const password=$('password').value;
 
- let result;
+let result;
 
- try{
-  result=authMode==='login'
-   ?await db.auth.signInWithPassword({email,password})
-   :await db.auth.signUp({email,password});
- }catch(err){
-  alert('Account request failed: '+(err.message||'Please try again.'));
-  return;
- }
+try{
+result=authMode==='login'
+?await db.auth.signInWithPassword({email,password})
+:await db.auth.signUp({email,password});
+}catch(err){
+alert('Account request failed: '+(err.message||'Please try again.'));
+return;
+}
 
- if(result.error){
-  alert(result.error.message);
-  return;
- }
+if(result.error){
+alert(result.error.message);
+return;
+}
 
- currentSession=result.data.session;
- updateAccountUI();
+currentSession=result.data.session;
+updateAccountUI();
 
- if(authMode==='signup'&&!currentSession){
-  alert('Registration submitted. Check your email to confirm your account.');
- }else{
-  alert('Login successful.');
- }
-});
-
-$('logoutBtn').addEventListener('click',async()=>{
- if(!db)return;
-
- const {error}=await db.auth.signOut();
-
- if(error){
-  alert(error.message);
-  return;
- }
-
- currentSession=null;
- authMode='login';
- updateAccountUI();
-});
-
-$('year').textContent=new Date().getFullYear();
-saveCart();
-loadProducts();
-
-</script>
-</body>
-</html>
+if(authMode==='signup'&&!currentSession){
+alert('Registration submitted. Check your email to confirm your account.');
+}else{
+ale
