@@ -352,28 +352,129 @@ async function verifyOrderPayment(orderId, decision){
 }
 
 async function updateOrderDecision(orderId, decision){
+
     if(!confirm(
         decision === "accepted"
             ? "Accept this customer order?"
             : "Reject this customer order?"
     )) return;
 
-    await updateSellerOrder(
-        orderId,
-        {
-            order_status: decision === "accepted"
-                ? "accepted"
-                : "cancelled"
-        },
-        decision === "accepted"
-            ? "Order accepted."
-            : "Order rejected."
-    );
+    if(decision !== "accepted"){
+        await updateSellerOrder(
+            orderId,
+            {order_status:"cancelled"},
+            "Order rejected."
+        );
+        return;
+    }
+
+    const waWindow = window.open("about:blank","_blank");
+
+    try{
+        const result = await db
+            .from("store_orders")
+            .select("id,order_number,customer_name,customer_mobile,delivery_address,pin_code,subtotal,payment_utr,payment_status,tracking_details")
+            .eq("id",orderId)
+            .eq("seller_id",sellerProfile.id)
+            .single();
+
+        if(result.error) throw result.error;
+
+        const order = result.data;
+
+        const itemsResult = await db
+            .from("store_order_items")
+            .select("product_name,quantity,unit_price")
+            .eq("order_id",orderId);
+
+        if(itemsResult.error) throw itemsResult.error;
+
+        const update = await db
+            .from("store_orders")
+            .update({
+                order_status:"accepted",
+                updated_at:new Date().toISOString()
+            })
+            .eq("id",orderId)
+            .eq("seller_id",sellerProfile.id)
+            .select("id")
+            .maybeSingle();
+
+        if(update.error) throw update.error;
+        if(!update.data) throw new Error("Order update not confirmed.");
+
+        let mobile = String(order.customer_mobile || "")
+            .replace(/\D/g,"");
+
+        if(mobile.length === 10) mobile = "91" + mobile;
+
+        if(!/^\d{11,15}$/.test(mobile)){
+            throw new Error("Order accepted, but customer mobile number is invalid.");
+        }
+
+        const productLines = (itemsResult.data || []).map(item => {
+            const qty = Number(item.quantity || 0);
+            const rate = Number(item.unit_price || 0);
+
+            return `${item.product_name}
+Quantity: ${qty}
+Rate: ₹${rate.toFixed(2)}
+Total: ₹${(qty * rate).toFixed(2)}`;
+        }).join("\n\n");
+
+        const message =
+`Dear ${order.customer_name || "Customer"},
+
+Your order has been ACCEPTED!
+
+VIKKA STORE - ORDER DETAILS
+
+Order ID: ${order.order_number || order.id}
+
+${productLines}
+
+Total Payment: ₹${Number(order.subtotal || 0).toFixed(2)}
+Payment Status: ${order.payment_status || "Verified"}
+Payment UTR: ${order.payment_utr || "Not available"}
+
+Delivery Address:
+${order.delivery_address || "-"}
+PIN Code: ${order.pin_code || "-"}
+
+Tracking Details:
+${order.tracking_details || "Will be shared after dispatch."}
+
+Thank you for shopping with VIKKA Store!
+
+Warm Regards,
+Team VIKKA Store`;
+
+        if(waWindow){
+            waWindow.location.href =
+                "https://wa.me/" + mobile +
+                "?text=" + encodeURIComponent(message);
+        }
+
+        alert("Order accepted. WhatsApp message is ready. Please press Send.");
+
+        await loadOrders();
+
+    }catch(error){
+        if(waWindow) waWindow.close();
+        alert("Order update: " + error.message);
+        await loadOrders();
+    }
 }
 
 async function saveOrderTracking(orderId){
     const field = document.getElementById("tracking_" + orderId);
     const details = field ? field.value.trim() : "";
+
+    if(!details){
+        alert("Please enter tracking details.");
+        return;
+    }
+
     const words = details.match(/\S+/g) || [];
 
     if(words.length > 70){
@@ -381,11 +482,95 @@ async function saveOrderTracking(orderId){
         return;
     }
 
-    await updateSellerOrder(
-        orderId,
-        {tracking_details: details},
-        "Tracking details saved."
-    );
+    const waWindow = window.open("about:blank", "_blank");
+
+    try{
+        const result = await db
+            .from("store_orders")
+            .select("order_number,customer_name,customer_mobile,subtotal,payment_status,payment_utr")
+            .eq("id", orderId)
+            .eq("seller_id", sellerProfile.id)
+            .single();
+
+        if(result.error) throw result.error;
+
+        const order = result.data;
+
+        const itemsResult = await db
+            .from("store_order_items")
+            .select("product_name,quantity,unit_price")
+            .eq("order_id", orderId);
+
+        if(itemsResult.error) throw itemsResult.error;
+
+        const items = itemsResult.data || [];
+
+        const update = await db
+            .from("store_orders")
+            .update({
+                tracking_details: details,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", orderId)
+            .eq("seller_id", sellerProfile.id)
+            .select("id")
+            .maybeSingle();
+
+        if(update.error) throw update.error;
+        if(!update.data) throw new Error("Tracking update not confirmed.");
+
+        let mobile = String(order.customer_mobile || "")
+            .replace(/\D/g, "");
+
+        if(mobile.length === 10) mobile = "91" + mobile;
+
+        if(!/^\d{11,15}$/.test(mobile)){
+            throw new Error("Tracking saved, but customer mobile number is invalid.");
+        }
+
+        const productDetails = items.map(function(item, index){
+            return (index + 1) + ". " + item.product_name +
+                "\nQuantity: " + item.quantity +
+                "\nRate: ₹" + Number(item.unit_price || 0).toFixed(2);
+        }).join("\n\n");
+
+        const message =
+`Dear ${order.customer_name || "Customer"},
+
+Your VIKKA Store order details are below:
+
+Order ID: ${order.order_number || orderId}
+
+Product Details:
+${productDetails || "Please contact the seller for product details."}
+
+Total Payment: ₹${Number(order.subtotal || 0).toFixed(2)}
+
+Payment Status: ${order.payment_status || "Pending"}
+Payment UTR: ${order.payment_utr || "Not available"}
+
+Tracking Details:
+${details}
+
+Thank you for shopping with VIKKA Store!
+
+Warm Regards,
+Team VIKKA Store`;
+
+        if(waWindow){
+            waWindow.location.href =
+                "https://wa.me/" + mobile +
+                "?text=" + encodeURIComponent(message);
+        }
+
+        alert("Tracking saved. WhatsApp message is ready. Please press Send.");
+        await loadOrders();
+
+    }catch(error){
+        if(waWindow) waWindow.close();
+        alert("Update: " + error.message);
+        await loadOrders();
+    }
 }
 
 async function loadOrders(){
