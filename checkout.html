@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VIKKA Store | Checkout</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 body{font-family:Arial,sans-serif;background:#f5f7fa;color:#202938;margin:0}
 header{background:#142b4a;color:white;padding:15px;display:flex;align-items:center;gap:12px}
@@ -16,8 +17,10 @@ button{background:#ffbd45;border:0;padding:15px;width:100%;border-radius:9px;fon
 button:disabled{opacity:.6;cursor:wait}
 .qr{max-width:190px;width:100%;display:block;margin:15px auto}
 .muted{color:#666}
+#message{overflow-wrap:anywhere}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -26,12 +29,13 @@ button:disabled{opacity:.6;cursor:wait}
 </header>
 
 <main>
+
 <div class="card">
 <h2>Delivery Details</h2>
 <input id="name" placeholder="Customer Name">
-<input id="mobile" placeholder="Mobile Number" maxlength="10">
+<input id="mobile" placeholder="Mobile Number" maxlength="10" inputmode="numeric">
 <textarea id="address" placeholder="Full Delivery Address"></textarea>
-<input id="pin" placeholder="PIN Code" maxlength="6">
+<input id="pin" placeholder="PIN Code" maxlength="6" inputmode="numeric">
 </div>
 
 <div class="card">
@@ -52,11 +56,13 @@ button:disabled{opacity:.6;cursor:wait}
 <button id="orderButton" onclick="placeOrder()">Place Order</button>
 <p id="message"></p>
 </div>
+
 </main>
 
 <script>
 const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
 const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let cart=[];
@@ -66,7 +72,9 @@ let orderInProgress=false;
 try{
  cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
  if(!Array.isArray(cart)) cart=[];
-}catch(e){cart=[];}
+}catch(e){
+ cart=[];
+}
 
 function price(p){
  return Number(p.price||p.selling_price||0);
@@ -86,10 +94,23 @@ function render(){
  document.getElementById('items').innerHTML=cart.map(p=>{
   const sub=price(p)*quantity(p);
   total+=sub;
-  return '<p>'+productName(p)+' × '+quantity(p)+' — ₹'+sub.toFixed(2)+'</p>';
+
+  return '<p>'+escapeHTML(productName(p))+
+   ' × '+quantity(p)+' — ₹'+sub.toFixed(2)+'</p>';
  }).join('')||'Your cart is empty.';
 
- document.getElementById('total').textContent='Total: ₹'+total.toFixed(2);
+ document.getElementById('total').textContent=
+  'Total: ₹'+total.toFixed(2);
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,char=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+ })[char]);
 }
 
 async function loadSellers(){
@@ -102,7 +123,6 @@ async function loadSellers(){
 
  let ids=[...new Set(cart.map(p=>p.seller_id).filter(Boolean))];
 
- // Try to identify seller using seller_products product IDs
  const missing=cart.filter(p=>!p.seller_id);
 
  if(missing.length){
@@ -116,7 +136,9 @@ async function loadSellers(){
    if(!result.error && result.data){
     result.data.forEach(product=>{
      const item=cart.find(p=>String(p.id)===String(product.id));
-     if(item && product.seller_id) item.seller_id=product.seller_id;
+     if(item && product.seller_id){
+      item.seller_id=product.seller_id;
+     }
     });
    }
   }
@@ -146,13 +168,18 @@ async function loadSellers(){
  sellerData=data||[];
 
  box.innerHTML=sellerData.map(s=>{
-  return '<h3>'+(s.shop_name||s.full_name||'Seller')+'</h3>'+
-   (s.payment_upi_id?'<p>UPI ID: '+s.payment_upi_id+'</p>':'<p>UPI ID not added</p>')+
-   (s.payment_qr_url?'<img class="qr" src="'+s.payment_qr_url+'" alt="Seller QR Code">':'<p>QR code not added</p>');
+  return '<h3>'+escapeHTML(s.shop_name||s.full_name||'Seller')+'</h3>'+
+   (s.payment_upi_id
+    ?'<p>UPI ID: '+escapeHTML(s.payment_upi_id)+'</p>'
+    :'<p>UPI ID not added</p>')+
+   (s.payment_qr_url
+    ?'<img class="qr" src="'+escapeHTML(s.payment_qr_url)+'" alt="Seller QR Code">'
+    :'<p>QR code not added</p>');
  }).join('');
 }
 
 async function placeOrder(){
+
  if(orderInProgress) return;
 
  const n=document.getElementById('name').value.trim();
@@ -160,6 +187,7 @@ async function placeOrder(){
  const a=document.getElementById('address').value.trim();
  const pin=document.getElementById('pin').value.trim();
  const utr=document.getElementById('utr').value.trim();
+
  const message=document.getElementById('message');
  const button=document.getElementById('orderButton');
 
@@ -178,7 +206,7 @@ async function placeOrder(){
   return;
  }
 
- if(cart.some(p=>!productName(p)||price(p)<=0||!Number.isFinite(price(p)))){
+ if(cart.some(p=>!productName(p)||!Number.isFinite(price(p))||price(p)<=0)){
   alert('A product has an invalid name or price. Please check your cart.');
   return;
  }
@@ -186,7 +214,9 @@ async function placeOrder(){
  const groups={};
 
  cart.forEach(p=>{
-  if(!groups[p.seller_id]) groups[p.seller_id]=[];
+  if(!groups[p.seller_id]){
+   groups[p.seller_id]=[];
+  }
   groups[p.seller_id].push(p);
  });
 
@@ -196,15 +226,26 @@ async function placeOrder(){
  message.textContent='Please wait. Your order is being submitted.';
 
  try{
+
   const sellerIds=Object.keys(groups);
+  const createdOrders=[];
 
   for(const sellerId of sellerIds){
-   const products=groups[sellerId];
-   const subtotal=products.reduce((sum,p)=>sum+price(p)*quantity(p),0);
 
-   const {data:order,error:orderError}=await db
+   const products=groups[sellerId];
+
+   const subtotal=products.reduce(
+    (sum,p)=>sum+price(p)*quantity(p),0
+   );
+
+   // Generate Order ID before inserting.
+   // No SELECT permission is required to retrieve the order ID.
+   const orderId=crypto.randomUUID();
+
+   const {error:orderError}=await db
     .from('store_orders')
     .insert({
+     id:orderId,
      seller_id:sellerId,
      customer_name:n,
      customer_mobile:m,
@@ -214,14 +255,16 @@ async function placeOrder(){
      payment_utr:utr||null,
      payment_status:'pending',
      order_status:'pending'
-    })
-    .select('id,order_number')
-    .single();
+    });
 
-   if(orderError) throw new Error('Order could not be saved: '+orderError.message);
+   if(orderError){
+    throw new Error(
+     'Order could not be saved: '+orderError.message
+    );
+   }
 
    const orderItems=products.map(p=>({
-    order_id:order.id,
+    order_id:orderId,
     product_id:p.id||null,
     product_name:productName(p),
     quantity:quantity(p),
@@ -233,18 +276,31 @@ async function placeOrder(){
     .insert(orderItems);
 
    if(itemError){
-    throw new Error('Order '+order.order_number+' was created, but its items could not be saved: '+itemError.message);
+    throw new Error(
+     'Order was created, but its products could not be saved: '+
+     itemError.message
+    );
    }
+
+   createdOrders.push(orderId);
   }
 
   localStorage.removeItem('vikka_cart');
-  message.textContent='Order submitted successfully! Please wait for seller confirmation.';
+
+  message.textContent=
+   'Order submitted successfully! Please wait for seller confirmation.';
+
   document.getElementById('items').textContent='Order submitted.';
   document.getElementById('total').textContent='';
-  document.getElementById('sellerPayments').textContent='Thank you for shopping with VIKKA Store.';
+  document.getElementById('sellerPayments').textContent=
+   'Thank you for shopping with VIKKA Store.';
+
+  button.textContent='Order Submitted';
 
  }catch(error){
+
   message.textContent='Order error: '+error.message;
+
   orderInProgress=false;
   button.disabled=false;
   button.textContent='Place Order';
@@ -253,6 +309,7 @@ async function placeOrder(){
 
 render();
 loadSellers();
+
 </script>
 </body>
 </html>
