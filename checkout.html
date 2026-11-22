@@ -156,8 +156,8 @@ async function loadSellers(){
   return;
  }
 
- const {data,error}=await db.from('seller_profiles')
-  .select('id,shop_name,full_name,phone,payment_upi_id,payment_qr_url')
+ const {data,error}=await db.from('public_seller_payments')
+  .select('id,shop_name,full_name,payment_upi_id,payment_qr_url')
   .in('id',ids);
 
  if(error){
