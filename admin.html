@@ -168,6 +168,13 @@ Show product in store
 <button class="yellow" onclick="loadProducts()">Refresh Products</button>
 <div id="productList" class="grid" style="margin-top:14px"></div>
 </div>
+ <div class="card">
+  <h3>⏳ Pending Seller Products</h3>
+  <button class="yellow" onclick="loadSellerProducts()">
+    Refresh Pending Products
+  </button>
+  <div id="sellerProductList" class="grid" style="margin-top:14px"></div>
+</div>
 </section>
 
 <section id="categories" class="tab card hidden">
@@ -495,6 +502,98 @@ async function loadProducts(){
 
 
 // ESCAPE HTML
+ // LOAD PENDING SELLER PRODUCTS
+async function loadSellerProducts(){
+ if(!currentUser) return;
+
+ const box = el("sellerProductList");
+ box.innerHTML = "Loading seller products...";
+
+ try{
+  const {data,error} = await db
+   .from("seller_products")
+   .select("*")
+   .eq("status","pending")
+   .order("created_at",{ascending:false});
+
+  if(error) throw error;
+
+  if(!data || data.length===0){
+   box.innerHTML = "<p>No pending seller products found.</p>";
+   return;
+  }
+
+  box.innerHTML = data.map(p=>`
+   <div class="product">
+    <img src="${escapeHTML(p.image_url||"")}"
+     onerror="this.style.display='none'" alt="Product">
+
+    <h4>${escapeHTML(p.name||"-")}</h4>
+    <p>Price: ₹${Number(p.price||0)}</p>
+    <p>Category: ${escapeHTML(p.category||"-")}</p>
+    <p>Stock: ${Number(p.stock||0)}</p>
+    <p>Seller ID: ${escapeHTML(p.seller_id||"-")}</p>
+    <p>Description: ${escapeHTML(p.description||"-")}</p>
+    <p>Status: PENDING</p>
+
+    <div class="actions">
+     <button class="green"
+      onclick="updateSellerProduct('${escapeHTML(p.id)}','approved')">
+      Approve
+     </button>
+
+     <button class="red"
+      onclick="updateSellerProduct('${escapeHTML(p.id)}','rejected')">
+      Reject
+     </button>
+    </div>
+   </div>
+  `).join("");
+
+ }catch(error){
+  box.innerHTML =
+   "Error loading products: "+escapeHTML(error.message);
+ }
+}
+
+
+// APPROVE / REJECT SELLER PRODUCT
+async function updateSellerProduct(id,newStatus){
+
+ if(!currentUser){
+  alert("Please login as Admin.");
+  return;
+ }
+
+ const action = newStatus==="approved" ? "Approve" : "Reject";
+
+ if(!confirm(action+" this seller product?")){
+  return;
+ }
+
+ try{
+  const {data,error} = await db
+   .from("seller_products")
+   .update({status:newStatus})
+   .eq("id",id)
+   .eq("status","pending")
+   .select("id,status");
+
+  if(error) throw error;
+
+  if(!data || data.length===0){
+   alert("Status not updated. Please check Admin permission.");
+   return;
+  }
+
+  alert("Product "+newStatus+" successfully.");
+
+  await loadSellerProducts();
+
+ }catch(error){
+  alert("Update failed: "+error.message);
+ }
+}
 function escapeHTML(value){
  return String(value).replace(/[&<>"']/g,c=>({
   "&":"&amp;","<":"&lt;",">":"&gt;",
