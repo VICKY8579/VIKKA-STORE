@@ -56,6 +56,7 @@ nav a{margin-left:8px;font-size:13px}
   </nav>
 <img src="VIKKA-STORE-LOGO.jpeg" alt="VIKKA STORE Logo" style="height:80px;width:80px;object-fit:contain;border-radius:10px;">
 </header>
+
 <input id="search" class="search"
 placeholder="Search products, brands or categories...">
 
@@ -120,15 +121,27 @@ async function loadProducts(){
   const box = document.getElementById('productList');
   box.innerHTML = '<div class="status">Loading products...</div>';
 
-  const {data,error} = await db.from('products').select('*');
+  const [oldResult, sellerResult] = await Promise.all([
+    db.from('products').select('*'),
+    db.from('seller_products').select('*').eq('status','approved')
+  ]);
 
-  if(error){
+  if(oldResult.error || sellerResult.error){
     box.innerHTML = '<div class="status">Products load nahi hue. Please try again.</div>';
-    console.error(error);
+    console.error(oldResult.error || sellerResult.error);
     return;
   }
 
-  allProducts = (data || []).filter(p => p.is_active !== false);
+  const oldProducts = (oldResult.data || [])
+    .filter(p => p.is_active !== false);
+
+  const sellerProducts = (sellerResult.data || []).map(p => ({
+    ...p,
+    is_active: true
+  }));
+
+  allProducts = [...oldProducts, ...sellerProducts];
+
   createCategories();
   showProducts();
 }
