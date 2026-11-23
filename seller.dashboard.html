@@ -582,8 +582,13 @@ document.getElementById("productForm").addEventListener("submit",async function(
         return;
     }
 
-    if(!imageFile.type.startsWith("image/")){
-        showMessage("uploadMessage","Please select a valid product image.");
+    if(imageFiles.length===0 || imageFiles.length>5){
+        showMessage("uploadMessage","Please select 1 to 5 photos.");
+        return;
+    }
+
+    if(imageFiles.some(file=>!file.type.startsWith("image/"))){
+        showMessage("uploadMessage","Please select valid image files.");
         return;
     }
 
@@ -594,17 +599,26 @@ document.getElementById("productForm").addEventListener("submit",async function(
     let paymentCreated=false;
 
     try{
-        const imageExt=imageFile.name.split(".").pop().toLowerCase();
-        const imagePath=currentUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+imageExt;
+        const imageUrls=[];
 
-        const imageUpload=await db.storage.from("images")
-            .upload(imagePath,imageFile,{upsert:false});
+        for(const imageFile of imageFiles){
+            const imageExt=imageFile.name.split(".").pop().toLowerCase();
+            const imagePath=currentUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+imageExt;
 
-        if(imageUpload.error)
-            throw new Error("Product image upload failed: "+imageUpload.error.message);
+            const imageUpload=await db.storage.from("images")
+                .upload(imagePath,imageFile,{upsert:false});
 
-        const imageUrl=db.storage.from("images")
-            .getPublicUrl(imagePath).data.publicUrl;
+            if(imageUpload.error){
+                throw new Error("Product image upload failed: "+imageUpload.error.message);
+            }
+
+            const imageUrl=db.storage.from("images")
+                .getPublicUrl(imagePath).data.publicUrl;
+
+            imageUrls.push(imageUrl);
+        }
+
+        const imageUrl=imageUrls[0];
 
         const paymentResult=await db.from("seller_upload_payments")
             .insert({
@@ -619,27 +633,38 @@ document.getElementById("productForm").addEventListener("submit",async function(
             })
             .select("id").single();
 
-        if(paymentResult.error)
+        if(paymentResult.error){
             throw new Error("Payment record failed: "+paymentResult.error.message);
+        }
 
         paymentCreated=true;
 
         const productResult=await db.from("seller_products")
-            .insert({
-                seller_id:sellerProfile.id,
-                name:name,
-                description:description,
-                price:price,
-                image_url:imageUrl,
-                category:category,
-                stock:stock,
-                status:"pending",
-                upload_payment_id:paymentResult.data.id
-            });
+    .insert({
+        seller_id:sellerProfile.id,
+        name:name,
+        description:description,
+        price:price,
+        image_url:imageUrl,
+        image_urls:imageUrls,
+        category:category,
+        stock:stock,
+        status:"pending",
+        upload_payment_id:paymentResult.data.id
+    })
+    .select("id,status")
+    .single();
 
-        if(productResult.error){
-            throw new Error("Payment record created, but product save failed. Contact Admin with UTR: "+utr+". Error: "+productResult.error.message);
-        }
+if(productResult.error){
+    throw new Error(
+        "Product could not be sent for Admin approval: "+
+        productResult.error.message
+    );
+}
+
+if(!productResult.data){
+    throw new Error("Product was not saved in seller_products.");
+}
 
         showMessage("uploadMessage","Product submitted. Payment verification and product approval are pending.",true);
 
@@ -663,7 +688,6 @@ document.getElementById("productForm").addEventListener("submit",async function(
         button.textContent="Submit Product";
     }
 });
-
 async function loadProducts(){
     const tbody=document.getElementById("productsTable");
     tbody.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
