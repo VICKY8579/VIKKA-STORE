@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142b4a">
+<meta name="description" content="Shop Desi Masala at VIKKA Store.">
+<title>Desi Masala | VIKKA Store</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{--navy:#142b4a;--blue:#2874a6;--orange:#ffbd45;--bg:#f5f7fa;--green:#087443}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;color:#202938;background:var(--bg)}
+button,input{font:inherit}
+button{cursor:pointer}
+.site-header{background:var(--navy);color:white;padding:12px 5%;position:sticky;top:0;z-index:10}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:white;text-decoration:none}
+.brand img{width:54px;height:54px;object-fit:contain;background:white;border-radius:8px}
+.brand-name{font-size:25px;font-weight:800}
+.brand-name span{color:var(--orange)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:7px;padding:11px 14px;font-weight:700}
+.btn-orange{background:var(--orange);color:var(--navy)}
+.btn-light{background:white;color:var(--navy)}
+.btn-blue{background:var(--navy);color:white}
+.btn-outline{background:white;color:var(--navy);border:1px solid var(--navy)}
+.search-wrap{padding:15px 5%;background:white}
+.search-row{max-width:1000px;margin:auto;display:flex;gap:8px;flex-wrap:wrap}
+.search-row input{flex:1;min-width:150px;padding:13px;border:1px solid #cbd2dc;border-radius:8px}
+.hero{margin:20px 5%;padding:28px;border-radius:14px;background:linear-gradient(120deg,var(--navy),var(--blue));color:white;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.hero h1{font-size:30px;margin:0 0 9px}
+.hero p{line-height:1.5;margin-bottom:0}
+.hero-mark{font-size:58px}
+main{padding:0 5% 36px}
+h2{color:var(--navy);margin:22px 0 12px}
+.notice{background:#fff7e5;border:1px solid #f2d28c;border-radius:10px;padding:13px 15px;line-height:1.5;margin:15px 0}
+.progress{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress span{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
+.product-card{background:white;border-radius:11px;padding:12px;box-shadow:0 2px 10px #0000000d;min-width:0}
+.product-image{height:170px;width:100%;object-fit:contain;background:#f3f5f7;border-radius:8px}
+.product-card h3{font-size:16px;margin:10px 0 6px;overflow-wrap:anywhere}
+.muted{color:#657080;font-size:13px;line-height:1.4}
+.price{font-size:19px;color:var(--green);font-weight:800}
+.card-actions{display:flex;gap:7px;margin-top:10px}
+.card-actions button{flex:1;padding:10px 5px;font-size:13px}
+.status{background:white;border-radius:9px;padding:24px;text-align:center;grid-column:1/-1;color:#4b5563}
+.footer{background:var(--navy);color:white;padding:24px 5%;text-align:center}
+.footer a{color:var(--orange);margin:0 8px;text-decoration:none}
+.overlay{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px;z-index:30}
+.overlay.show{display:flex}
+.panel{background:white;width:min(560px,100%);max-height:90vh;overflow:auto;border-radius:13px;padding:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:center}
+.close{border:0;background:#edf0f4;border-radius:50%;width:35px;height:35px;font-size:20px}
+.cart-row{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid #e5e7eb;padding:12px 0}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{border:1px solid #ccd2dc;background:white;border-radius:5px;width:28px;height:28px}
+.detail-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.detail-gallery img{width:100%;height:180px;object-fit:contain;background:#f4f5f7;border-radius:8px}
+.wide{width:100%;margin-top:10px}
+@media(max-width:520px){
+.brand-name{font-size:21px}
+.brand img{width:45px;height:45px}
+.hero{padding:23px 18px}
+.hero h1{font-size:24px}
+.hero-mark{font-size:42px}
+.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.product-card{padding:9px}
+.product-image{height:135px}
+.card-actions{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+<div class="top">
+<a class="brand" href="index.html">
+<img src="VIKKA-STORE-LOGO.jpeg" alt="VIKKA Store logo" onerror="this.style.display='none'">
+<div class="brand-name">VIKKA <span>STORE</span></div>
+</a>
+<div class="actions">
+<a class="btn btn-light" href="index.html" style="text-decoration:none">Home</a>
+<button class="btn btn-orange" id="cartBtn">Cart (<span id="cartCount">0</span>)</button>
+</div>
+</div>
+</header>
+
+<section class="hero">
+<div>
+<h1>Desi Masala</h1>
+<p>Bring authentic taste to your kitchen with our Desi Masala collection.</p>
+<p><strong>Minimum order value: ₹2,000</strong></p>
+</div>
+<div class="hero-mark">🌶️</div>
+</section>
+
+<div class="search-wrap">
+<div class="search-row">
+<input id="search" type="search" placeholder="Search Desi Masala products...">
+<button class="btn btn-blue" id="refreshBtn">Refresh</button>
+</div>
+</div>
+
+<main>
+<div class="notice">
+<strong>Desi Masala order rule</strong><br>
+Add Desi Masala products worth at least ₹2,000 to place an order. This minimum is counted separately from Dry Fruits.
+<div class="progress"><span id="progressBar"></span></div>
+<div id="minimumStatus" class="muted" style="margin-top:7px">Your Desi Masala cart: ₹0 / ₹2,000</div>
+</div>
+
+<h2>Shop Desi Masala</h2>
+<p class="muted">Products listed in the “Desi Masala” category are shown here.</p>
+
+<div id="productGrid" class="product-grid">
+<div class="status">Loading products...</div>
+</div>
+</main>
+
+<footer class="footer">
+<strong>VIKKA STORE</strong>
+<p>Your Online Shopping Partner</p>
+<p>WhatsApp: +91 85799 70090</p>
+<p><a href="index.html">Back to Home</a></p>
+<p>© <span id="year"></span> VIKKA Store. All rights reserved.</p>
+</footer>
+
+<div class="overlay" id="cartOverlay">
+<div class="panel">
+<div class="panel-head">
+<h2>Your Desi Masala Cart</h2>
+<button class="close" data-close="cartOverlay">×</button>
+</div>
+<div id="cartItems"></div>
+<div id="cartTotal" style="font-weight:800;text-align:right;margin-top:14px"></div>
+<div id="cartRule" class="muted" style="margin-top:8px"></div>
+<button class="btn btn-orange wide" id="checkoutBtn">Proceed to Checkout</button>
+</div>
+</div>
+
+<div class="overlay" id="detailOverlay">
+<div class="panel">
+<div class="panel-head">
+<h2>Product Details</h2>
+<button class="close" data-close="detailOverlay">×</button>
+</div>
+<div id="detailContent"></div>
+</div>
+</div>
+
+<script>
+'use strict';
+
+const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+const CATEGORY_NAME='Desi Masala';
+const MINIMUM_ORDER=2000;
+
+const $=id=>document.getElementById(id);
+
+let db=null;
+let products=[];
+let cart=[];
+
+try{
+const saved=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
+cart=Array.isArray(saved)?saved:[];
+}catch{
+cart=[];
+}
+
+function nameOf(p){
+return String(p.name||p.title||p.product_name||'Product');
+}
+
+function priceOf(p){
+const v=p.price??p.selling_price;
+return v===null||v===undefined||v===''?null:Number(v);
+}
+
+function money(v){
+return Number(v).toLocaleString('en-IN',{
+style:'currency',
+currency:'INR',
+maximumFractionDigits:2
+});
+}
+
+function categoryOf(p){
+return String(p.category||'').trim().toLowerCase();
+}
+
+function isMasala(p){
+return categoryOf(p)===CATEGORY_NAME.toLowerCase();
+}
+
+function imagesOf(p){
+let list=[];
+
+if(Array.isArray(p.image_urls)){
+list=p.image_urls;
+}else if(typeof p.image_urls==='string'){
+try{
+const x=JSON.parse(p.image_urls);
+if(Array.isArray(x))list=x;
+}catch{}
+}
+
+if(p.image_url)list.unshift(p.image_url);
+
+return [...new Set(list.filter(Boolean).map(x=>{
+try{
+const u=new URL(String(x),location.href);
+return ['http:','https:'].includes(u.protocol)?u.href:'';
+}catch{
+return '';
+}
+}).filter(Boolean))];
+}
+
+function fallbackImage(){
+return 'data:image/svg+xml;charset=UTF-8,'+
+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#f1f4f8"/><text x="300" y="205" text-anchor="middle" font-size="34" fill="#64748b" font-family="Arial">VIKKA Store</text></svg>');
+}
+
+function masalaCart(){
+return cart.filter(isMasala);
+}
+
+function masalaSubtotal(){
+return masalaCart().reduce((sum,p)=>
+sum+(priceOf(p)||0)*(Number(p.quantity)||1),0);
+}
+
+function saveCart(){
+localStorage.setItem('vikka_cart',JSON.stringify(cart));
+$('cartCount').textContent=cart.reduce((n,p)=>n+(Number(p.quantity)||1),0);
+updateMinimum();
+}
+
+function updateMinimum(){
+const total=masalaSubtotal();
+const pct=Math.min(100,total/MINIMUM_ORDER*100);
+
+$('progressBar').style.width=pct+'%';
+
+$('minimumStatus').textContent=
+'Your Desi Masala cart: '+money(total)+' / '+money(MINIMUM_ORDER)+
+(total>=MINIMUM_ORDER?' — Minimum reached':' — Add '+money(MINIMUM_ORDER-total)+' more');
+}
+
+function showStatus(msg,retry=false){
+const grid=$('productGrid');
+grid.replaceChildren();
+
+const d=document.createElement('div');
+d.className='status';
+d.textContent=msg;
+grid.appendChild(d);
+
+if(retry){
+const b=document.createElement('button');
+b.className='btn btn-blue';
+b.textContent='Try Again';
+b.style.marginTop='12px';
+b.onclick=loadProducts;
+grid.appendChild(b);
+}
+}
+
+function openOverlay(id){
+$(id).classList.add('show');
+}
+
+function closeOverlay(id){
+$(id).classList.remove('show');
+}
+
+document.querySelectorAll('[data-close]').forEach(b=>{
+b.addEventListener('click',()=>closeOverlay(b.dataset.close));
+});
+
+document.querySelectorAll('.overlay').forEach(o=>{
+o.addEventListener('click',e=>{
+if(e.target===o)closeOverlay(o.id);
+});
+});
+
+function makeCard(p){
+const card=document.createElement('article');
+card.className='product-card';
+
+const img=document.createElement('img');
+img.className='product-image';
+img.src=imagesOf(p)[0]||fallbackImage();
+img.alt=nameOf(p);
+img.loading='lazy';
+img.onerror=()=>{
+img.onerror=null;
+img.src=fallbackImage();
+};
+card.appendChild(img);
+
+const h=document.createElement('h3');
+h.textContent=nameOf(p);
+card.appendChild(h);
+
+if(p.description){
+const d=document.createElement('p');
+d.className='muted';
+d.textContent=String(p.description).slice(0,100);
+card.appendChild(d);
+}
+
+const price=document.createElement('div');
+price.className='price';
+price.textContent=priceOf(p)===null?'Price unavailable':money(priceOf(p));
+card.appendChild(price);
+
+if(p.stock!==undefined&&p.stock!==null){
+const s=document.createElement('p');
+s.className='muted';
+s.textContent=Number(p.stock)>0?'In stock':'Currently unavailable';
+card.appendChild(s);
+}
+
+const actions=document.createElement('div');
+actions.className='card-actions';
+
+const details=document.createElement('button');
+details.className='btn btn-outline';
+details.textContent='View Details';
+details.onclick=()=>showDetails(p);
+
+const add=document.createElement('button');
+add.className='btn btn-blue';
+add.textContent='Add to Cart';
+add.disabled=(p.stock!==undefined&&Number(p.stock)<=0)||priceOf(p)===null;
+add.onclick=()=>addToCart(p);
+
+actions.append(details,add);
+card.appendChild(actions);
+
+return card;
+}
+
+function renderProducts(){
+const term=$('search').value.trim().toLowerCase();
+
+const list=products.filter(p=>
+[nameOf(p),p.description||'',p.brand||'']
+.join(' ').toLowerCase().includes(term)
+);
+
+const grid=$('productGrid');
+grid.replaceChildren();
+
+if(!list.length){
+showStatus(products.length?
+'No matching Desi Masala products found.':
+'No products found in the Desi Masala category.');
+return;
+}
+
+list.forEach(p=>grid.appendChild(makeCard(p)));
+}
+
+function addToCart(p){
+if(priceOf(p)===null){
+alert('This product price is not available yet.');
+return;
+}
+
+if(p.stock!==undefined&&Number(p.stock)<=0){
+alert('This product is currently unavailable.');
+return;
+}
+
+const id=p.id??nameOf(p);
+const found=cart.find(x=>String(x.id??nameOf(x))===String(id));
+
+if(found){
+found.quantity=(Number(found.quantity)||1)+1;
+}else{
+cart.push({...p,quantity:1});
+}
+
+saveCart();
+alert(nameOf(p)+' added to cart.');
+}
+
+function changeQty(index,delta){
+const list=masalaCart();
+const item=list[index];
+
+if(!item)return;
+
+const cartIndex=cart.indexOf(item);
+item.quantity=(Number(item.quantity)||1)+delta;
+
+if(item.quantity<=0){
+cart.splice(cartIndex,1);
+}
+
+saveCart();
+renderCart();
+}
+
+function renderCart(){
+const list=masalaCart();
+const wrap=$('cartItems');
+wrap.replaceChildren();
+
+if(!list.length){
+const d=document.createElement('div');
+d.className='status';
+d.textContent='Your Desi Masala cart is empty.';
+wrap.appendChild(d);
+}
+
+list.forEach((p,i)=>{
+const row=document.createElement('div');
+row.className='cart-row';
+
+const info=document.createElement('div');
+const n=document.createElement('strong');
+n.textContent=nameOf(p);
+
+const sub=document.createElement('div');
+sub.className='muted';
+sub.textContent=money(priceOf(p)||0)+' × '+(Number(p.quantity)||1);
+
+info.append(n,sub);
+
+const controls=document.createElement('div');
+controls.className='qty';
+
+[['−',-1],['+',1]].forEach(([label,delta])=>{
+const b=document.createElement('button');
+b.textContent=label;
+b.onclick=()=>changeQty(i,delta);
+controls.appendChild(b);
+});
+
+row.append(info,controls);
+wrap.appendChild(row);
+});
+
+const total=masalaSubtotal();
+
+$('cartTotal').textContent='Desi Masala Total: '+money(total);
+
+$('cartRule').textContent=total>=MINIMUM_ORDER?
+'Minimum order reached.':
+'Minimum order is ₹2,000. Add '+money(MINIMUM_ORDER-total)+' more.';
+
+$('checkoutBtn').disabled=total<MINIMUM_ORDER;
+}
+
+function showDetails(p){
+const box=$('detailContent');
+box.replaceChildren();
+
+const gallery=document.createElement('div');
+gallery.className='detail-gallery';
+
+imagesOf(p).forEach(src=>{
+const img=document.createElement('img');
+img.src=src;
+img.alt=nameOf(p);
+img.onerror=()=>{
+img.onerror=null;
+img.src=fallbackImage();
+};
+gallery.appendChild(img);
+});
+
+if(gallery.children.length)box.appendChild(gallery);
+
+const h=document.createElement('h3');
+h.textContent=nameOf(p);
+
+const price=document.createElement('div');
+price.className='price';
+price.textContent=priceOf(p)===null?'Price unavailable':money(priceOf(p));
+
+const desc=document.createElement('p');
+desc.textContent=String(p.description||'Product details will be updated soon.');
+
+const add=document.createElement('button');
+add.className='btn btn-blue wide';
+add.textContent='Add to Cart';
+add.disabled=priceOf(p)===null;
+
+add.onclick=()=>{
+addToCart(p);
+closeOverlay('detailOverlay');
+};
+
+box.append(h,price,desc,add);
+openOverlay('detailOverlay');
+}
+
+async function loadProducts(){
+showStatus('Loading Desi Masala products...');
+
+if(!window.supabase?.createClient){
+showStatus('Internet or Supabase library not available. Tap Try Again.',true);
+return;
+}
+
+try{
+if(!db){
+db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+}
+
+const {data:oldProducts,error:oldError}=await db
+.from('products')
+.select('*');
+
+if(oldError)throw oldError;
+
+let sellerProducts=[];
+
+const {data:sellerData,error:sellerError}=await db
+.from('seller_products')
+.select('*')
+.eq('status','approved');
+
+if(sellerError){
+console.warn('Approved seller products could not be loaded:',sellerError.message);
+}else{
+sellerProducts=Array.isArray(sellerData)?sellerData:[];
+}
+
+const combined=[
+...(Array.isArray(oldProducts)?oldProducts:[]),
+...sellerProducts
+];
+
+products=combined.filter(isMasala);
+renderProducts();
+
+}catch(err){
+console.error('VIKKA Desi Masala error:',err);
+showStatus(
+'Products load nahi hue: '+(err.message||'Supabase connection check karein.'),
+true
+);
+}
+}
+
+$('search').addEventListener('input',renderProducts);
+$('refreshBtn').addEventListener('click',loadProducts);
+
+$('cartBtn').addEventListener('click',()=>{
+renderCart();
+openOverlay('cartOverlay');
+});
+
+$('checkoutBtn').addEventListener('click',()=>{
+const total=masalaSubtotal();
+
+if(total<MINIMUM_ORDER){
+alert('Desi Masala ka minimum order ₹2,000 hai.');
+return;
+}
+
+localStorage.setItem('vikka_cart',JSON.stringify(cart));
+localStorage.setItem('vikka_checkout_scope','masala_dry_fruits');
+window.location.href='checkout.html';
+});
+
+$('year').textContent=new Date().getFullYear();
+
+saveCart();
+loadProducts();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+window.addEventListener('load',()=>{
+navigator.serviceWorker.register('./service-worker.js')
+.catch(err=>console.warn('Service worker:',err));
+});
+}
+</script>
+
+</body>
+</html>
