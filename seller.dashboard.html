@@ -44,6 +44,7 @@ img.preview{max-width:130px;max-height:130px;display:block;margin:8px 0}
 <input type="password" id="loginPassword" placeholder="Password">
 <button id="loginBtn" onclick="login()">Login</button>
 <p id="loginMessage" class="muted"></p>
+    <p id="debugMessage" style="color:red"></p>
 </div>
 
 <div id="dashboard">
@@ -778,5 +779,18 @@ window.verifyOrderPayment=verifyOrderPayment;
 window.updateOrderDecision=updateOrderDecision;
 window.saveOrderTracking=saveOrderTracking;
 window.savePaymentDetails=savePaymentDetails;
+window.addEventListener("error", function(e) {
+    const debug = document.getElementById("debugMessage");
+    if (debug) debug.textContent = "JavaScript Error: " + e.message;
+});
 
+window.addEventListener("load", function() {
+    const debug = document.getElementById("debugMessage");
+    if (debug) {
+        debug.textContent =
+            window.supabase && window.supabase.createClient
+            ? "Supabase Library Loaded"
+            : "Supabase Library NOT Loaded";
+    }
+});
 initializeDashboard();
