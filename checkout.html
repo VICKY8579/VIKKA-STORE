@@ -216,7 +216,32 @@ async function placeOrder(){
   alert('A product has an invalid name or price. Please check your cart.');
   return;
  }
+// VIKKA Store: Category-wise minimum order
+function getCategory(p){
+  return String(p.category || '').trim().toLowerCase();
+}
 
+const masalaTotal = cart
+  .filter(p => getCategory(p).includes('masala'))
+  .reduce((sum,p) => sum + price(p) * quantity(p), 0);
+
+const dryFruitsTotal = cart
+  .filter(p => {
+    const category = getCategory(p);
+    return category.includes('dry fruit') ||
+           category.includes('dryfruit');
+  })
+  .reduce((sum,p) => sum + price(p) * quantity(p), 0);
+
+if (masalaTotal > 0 && masalaTotal < 2000) {
+  alert('Masala minimum order is ₹2,000. Current total: ₹' + masalaTotal.toFixed(2));
+  return;
+}
+
+if (dryFruitsTotal > 0 && dryFruitsTotal < 2000) {
+  alert('Dry Fruits minimum order is ₹2,000. Current total: ₹' + dryFruitsTotal.toFixed(2));
+  return;
+}
  const groups={};
 
  cart.forEach(p=>{
