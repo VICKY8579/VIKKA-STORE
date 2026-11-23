@@ -107,7 +107,7 @@ img.preview{max-width:130px;max-height:130px;display:block;margin:8px 0}
 <label>Initial Stock (Minimum 10)</label>
 <input id="productStock" type="number" min="10" step="1" value="10" required>
 <label>Product Image</label>
-<input id="productImage" type="file" accept="image/*" required>
+<input id="productImages" type="file" accept="image/*" multiple required>
 <label>₹20 Payment UTR / Transaction ID</label>
 <input id="utrNumber" required placeholder="Enter transaction number">
 <button type="submit" id="uploadBtn">Submit Product</button>
@@ -561,12 +561,11 @@ document.getElementById("productForm").addEventListener("submit",async function(
     const price=Number(document.getElementById("productPrice").value);
     const stock=Number(document.getElementById("productStock").value);
     const utr=document.getElementById("utrNumber").value.trim();
-    const imageFile=document.getElementById("productImage").files[0];
-
-    if(!name||!description||!category||!imageFile||!utr){
-        showMessage("uploadMessage","Please complete all fields.");
-        return;
-    }
+    const imageFiles=Array.from(document.getElementById("productImages").files);
+    if(!name||!description||!category||imageFiles.length===0||imageFiles.length>5||!utr){
+    showMessage("uploadMessage","Please complete all fields and select 1 to 5 photos.");
+    return;
+}
 
     if(!Number.isFinite(price)||price<=0){
         showMessage("uploadMessage","Enter a valid product price.");
