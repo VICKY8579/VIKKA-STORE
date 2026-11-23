@@ -66,6 +66,19 @@ h2{color:var(--navy);margin:22px 0 12px}
 .form-field input{width:100%;padding:12px;border:1px solid #cbd2dc;border-radius:7px}
 .wide{width:100%;margin-top:10px}
 .detail-img{width:100%;height:230px;object-fit:contain;background:#f4f5f7;border-radius:8px}
+  .detail-gallery{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:10px;
+margin-bottom:14px;
+}
+.detail-gallery img{
+width:100%;
+height:180px;
+object-fit:contain;
+background:#f4f5f7;
+border-radius:8px;
+}
 @media(max-width:520px){
 .brand-name{font-size:21px}
 .brand img{width:45px;height:45px}
@@ -221,17 +234,33 @@ const v=p.price??p.selling_price;
 return v===null||v===undefined||v===''?null:v;
 }
 
-function imageUrl(p){
-const v=p.image_url||p.image||p.photo||'';
-if(!v)return '';
+function imageUrls(p){
+let urls=[];
+
+if(Array.isArray(p.image_urls)){
+urls=p.image_urls;
+}else if(typeof p.image_urls==="string"){
+try{
+const parsed=JSON.parse(p.image_urls);
+if(Array.isArray(parsed))urls=parsed;
+}catch{}
+}
+
+if(p.image_url)urls.unshift(p.image_url);
+
+return [...new Set(urls.filter(Boolean).map(v=>{
 try{
 const u=new URL(String(v),location.href);
 return ['https:','http:'].includes(u.protocol)?u.href:'';
 }catch{
 return '';
 }
+}).filter(Boolean))];
 }
 
+function imageUrl(p){
+return imageUrls(p)[0]||'';
+}
 function fallbackImage(){
 return 'data:image/svg+xml;charset=UTF-8,'+
 encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#f1f4f8"/><text x="300" y="205" text-anchor="middle" font-size="34" fill="#64748b" font-family="Arial">VIKKA Store</text></svg>');
@@ -508,43 +537,51 @@ $('cartTotal').textContent='Total: '+money(total);
 }
 
 function showDetails(p){
-$('detailContent').replaceChildren();
+    $('detailContent').replaceChildren();
 
-const src=imageUrl(p);
+    const gallery=document.createElement('div');
+    gallery.className='detail-gallery';
 
-if(src){
-const img=document.createElement('img');
-img.className='detail-img';
-img.src=src;
-img.alt=productName(p);
-img.onerror=()=>{
-img.onerror=null;
-img.src=fallbackImage();
-};
-$('detailContent').appendChild(img);
-}
+    const photos=imageUrls(p);
 
-const h=document.createElement('h3');
-h.textContent=productName(p);
+    photos.forEach(src=>{
+        const img=document.createElement('img');
+        img.src=src;
+        img.alt=productName(p);
+        img.onerror=()=>{
+            img.onerror=null;
+            img.src=fallbackImage();
+        };
+        gallery.appendChild(img);
+    });
 
-const price=document.createElement('div');
-price.className='price';
-price.textContent=productPrice(p)===null?'Price unavailable':money(productPrice(p));
+    if(photos.length){
+        $('detailContent').appendChild(gallery);
+    }
 
-const desc=document.createElement('p');
-desc.textContent=String(p.description||'Product details will be updated soon.');
+    const h=document.createElement('h3');
+    h.textContent=productName(p);
 
-const b=document.createElement('button');
-b.className='btn btn-blue wide';
-b.textContent='Add to Cart';
+    const price=document.createElement('div');
+    price.className='price';
+    price.textContent=productPrice(p)===null
+        ?'Price unavailable'
+        :money(productPrice(p));
 
-b.addEventListener('click',()=>{
-addToCart(p);
-closeOverlay('detailOverlay');
-});
+    const desc=document.createElement('p');
+    desc.textContent=String(p.description||'Product details will be updated soon.');
 
-$('detailContent').append(h,price,desc,b);
-openOverlay('detailOverlay');
+    const b=document.createElement('button');
+    b.className='btn btn-blue wide';
+    b.textContent='Add to Cart';
+
+    b.addEventListener('click',()=>{
+        addToCart(p);
+        closeOverlay('detailOverlay');
+    });
+
+    $('detailContent').append(h,price,desc,b);
+    openOverlay('detailOverlay');
 }
 
 function checkout(){
