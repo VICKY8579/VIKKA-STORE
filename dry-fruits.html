@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142b4a">
+<meta name="description" content="Shop premium Dry Fruits at VIKKA Store">
+<title>Dry Fruits | VIKKA Store</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+--navy:#142b4a;
+--blue:#2874a6;
+--orange:#ffbd45;
+--bg:#f5f7fa;
+--green:#087443;
+}
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Arial,sans-serif;
+color:#202938;
+background:var(--bg);
+}
+button,input{font:inherit}
+button{cursor:pointer}
+
+header{
+background:var(--navy);
+color:white;
+padding:12px 5%;
+position:sticky;
+top:0;
+z-index:10;
+}
+.top{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+}
+.brand{
+display:flex;
+align-items:center;
+gap:10px;
+color:white;
+text-decoration:none;
+}
+.brand img{
+width:54px;
+height:54px;
+object-fit:contain;
+background:white;
+border-radius:8px;
+}
+.brand-name{
+font-size:25px;
+font-weight:800;
+}
+.brand-name span{color:var(--orange)}
+
+.btn{
+border:0;
+border-radius:7px;
+padding:11px 14px;
+font-weight:700;
+}
+.btn-orange{background:var(--orange);color:var(--navy)}
+.btn-light{background:white;color:var(--navy)}
+.btn-blue{background:var(--navy);color:white}
+.btn-outline{background:white;color:var(--navy);border:1px solid var(--navy)}
+
+.hero{
+min-height:300px;
+background:
+linear-gradient(90deg,rgba(0,35,15,.88),rgba(0,35,15,.15)),
+url('dry-fruits-banner.png') center/cover no-repeat;
+display:flex;
+align-items:center;
+padding:30px 5%;
+color:white;
+}
+.hero-content{
+max-width:650px;
+}
+.hero-logo{
+width:190px;
+max-height:65px;
+object-fit:contain;
+background:white;
+border-radius:10px;
+padding:5px;
+margin-bottom:15px;
+}
+.hero h1{
+font-size:clamp(36px,6vw,64px);
+margin:0 0 10px;
+}
+.hero h1 span{color:#ffdc42}
+.hero p{
+font-size:19px;
+font-weight:bold;
+line-height:1.5;
+}
+.hero .tagline{
+display:inline-block;
+background:#c91520;
+padding:10px 18px;
+border-radius:5px;
+font-weight:bold;
+}
+
+.benefits{
+display:flex;
+gap:18px;
+flex-wrap:wrap;
+margin-top:18px;
+font-size:13px;
+font-weight:bold;
+}
+.benefits span{white-space:nowrap}
+
+.search-wrap{
+padding:16px 5%;
+background:white;
+}
+.search-row{
+max-width:1100px;
+margin:auto;
+display:flex;
+gap:8px;
+}
+.search-row input{
+flex:1;
+min-width:0;
+padding:13px;
+border:1px solid #cbd2dc;
+border-radius:8px;
+}
+
+main{padding:0 5% 35px}
+.notice{
+background:#fff7e5;
+border:1px solid #f2d28c;
+border-radius:10px;
+padding:15px;
+margin:18px 0;
+line-height:1.5;
+}
+.progress{
+height:9px;
+background:#e5e7eb;
+border-radius:20px;
+overflow:hidden;
+margin-top:9px;
+}
+.progress span{
+display:block;
+height:100%;
+background:var(--green);
+width:0;
+}
+h2{color:var(--navy)}
+.product-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(185px,1fr));
+gap:15px;
+}
+.product-card{
+background:white;
+border-radius:11px;
+padding:12px;
+box-shadow:0 2px 10px #0000000d;
+min-width:0;
+}
+.product-image{
+width:100%;
+height:170px;
+object-fit:contain;
+background:#f3f5f7;
+border-radius:8px;
+}
+.product-card h3{
+font-size:16px;
+overflow-wrap:anywhere;
+}
+.price{
+font-size:19px;
+color:var(--green);
+font-weight:800;
+}
+.muted{
+color:#657080;
+font-size:13px;
+line-height:1.5;
+}
+.card-actions{
+display:flex;
+gap:7px;
+margin-top:10px;
+}
+.card-actions button{flex:1}
+.empty-state{
+background:white;
+border-radius:14px;
+padding:25px;
+text-align:center;
+box-shadow:0 2px 10px #0000000d;
+}
+.empty-fruits{
+font-size:60px;
+margin:10px;
+}
+.seller-callout{
+background:#e3efff;
+border-radius:10px;
+padding:16px;
+margin-top:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:12px;
+flex-wrap:wrap;
+}
+.seller-callout a{
+background:var(--navy);
+color:white;
+padding:12px 18px;
+border-radius:8px;
+text-decoration:none;
+font-weight:bold;
+}
+
+footer{
+background:var(--navy);
+color:white;
+padding:25px 5%;
+text-align:center;
+}
+footer a{color:var(--orange)}
+
+.overlay{
+position:fixed;
+inset:0;
+background:#0008;
+display:none;
+align-items:center;
+justify-content:center;
+padding:15px;
+z-index:30;
+}
+.overlay.show{display:flex}
+.panel{
+background:white;
+width:min(550px,100%);
+max-height:90vh;
+overflow:auto;
+border-radius:13px;
+padding:20px;
+}
+.panel-head{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+.close{
+border:0;
+background:#edf0f4;
+border-radius:50%;
+width:35px;
+height:35px;
+font-size:20px;
+}
+.cart-row{
+display:flex;
+justify-content:space-between;
+gap:10px;
+border-bottom:1px solid #eee;
+padding:12px 0;
+}
+.wide{width:100%;margin-top:10px}
+
+@media(max-width:520px){
+.brand-name{font-size:21px}
+.brand img{width:45px;height:45px}
+.hero{min-height:250px;padding:24px 18px}
+.hero p{font-size:16px}
+.hero-logo{width:150px}
+.benefits{gap:10px;font-size:11px}
+.product-grid{
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:9px;
+}
+.product-card{padding:9px}
+.product-image{height:130px}
+.card-actions{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="top">
+<a class="brand" href="index.html">
+<img src="VIKKA-STORE-LOGO.jpeg" alt="VIKKA Store Logo">
+<div class="brand-name">VIKKA <span>STORE</span></div>
+</a>
+<div>
+<a class="btn btn-light" href="index.html">Home</a>
+<button class="btn btn-orange" id="cartBtn">
+Cart (<span id="cartCount">0</span>)
+</button>
+</div>
+</div>
+</header>
+
+<section class="hero">
+<div class="hero-content">
+<img class="hero-logo"
+src="VIKKA-STORE-LOGO.jpeg"
+alt="VIKKA STORE Logo">
+
+<h1>Dry <span>Fruits</span></h1>
+<div class="tagline">Premium Quality • Fresh & Healthy</div>
+
+<div class="benefits">
+<span>🌿 100% Natural</span>
+<span>✓ Premium Quality</span>
+<span>❤️ Nutritious & Healthy</span>
+</div>
+</div>
+</section>
+
+<div class="search-wrap">
+<div class="search-row">
+<input id="search" type="search"
+placeholder="Search Dry Fruits products...">
+<button class="btn btn-blue" id="refreshBtn">Refresh</button>
+</div>
+</div>
+
+<main>
+
+<div class="notice">
+<strong>Dry Fruits Order Rule</strong><br>
+Add Dry Fruits products worth at least ₹2,000 to place an order.
+This minimum is counted separately from Desi Masala.
+
+<div class="progress">
+<span id="progressBar"></span>
+</div>
+<div id="minimumStatus" class="muted">
+Your Dry Fruits cart: ₹0 / ₹2,000
+</div>
+</div>
+
+<h2>🥜 Shop Dry Fruits</h2>
+<p class="muted">
+Explore almonds, cashews, raisins, pistachios, walnuts,
+dates and other quality dry fruits.
+</p>
+
+<div id="productGrid" class="product-grid">
+<div class="empty-state">Loading products...</div>
+</div>
+
+</main>
+
+<footer>
+<strong>VIKKA STORE</strong>
+<p>Your Online Shopping Partner</p>
+<p>WhatsApp: +91 85799 70090</p>
+<p><a href="index.html">Back to Home</a></p>
+<p>© <span id="year"></span> VIKKA Store. All rights reserved.</p>
+</footer>
+
+<div class="overlay" id="cartOverlay">
+<div class="panel">
+<div class="panel-head">
+<h2>Your Dry Fruits Cart</h2>
+<button class="close" data-close="cartOverlay">×</button>
+</div>
+<div id="cartItems"></div>
+<div id="cartTotal"></div>
+<div id="cartRule" class="muted"></div>
+<button class="btn btn-orange wide" id="checkoutBtn">
+Proceed to Checkout
+</button>
+</div>
+</div>
+
+<script>
+'use strict';
+
+const SUPABASE_URL='https://izjlpgpvrmvhcefxulhj.supabase.co';
+const SUPABASE_KEY='sb_publishable__8amspsA0ewjZXZomxX8Nw_5YE14um-';
+const MINIMUM_ORDER=2000;
+
+const $=id=>document.getElementById(id);
+
+let db=null;
+let products=[];
+let cart=[];
+
+try{
+const saved=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
+cart=Array.isArray(saved)?saved:[];
+}catch{cart=[];}
+
+function nameOf(p){
+return String(p.name||p.title||p.product_name||'Product');
+}
+
+function priceOf(p){
+const v=p.price??p.selling_price;
+return v===null||v===undefined||v===''?null:Number(v);
+}
+
+function money(v){
+return '₹'+Number(v).toLocaleString('en-IN');
+}
+
+function isDryFruit(p){
+const c=String(p.category||'').trim().toLowerCase();
+return [
+'dry fruits',
+'dry fruit',
+'dry_fruits',
+'dry-fruits',
+'dryfruits'
+].includes(c);
+}
+
+function imageOf(p){
+let value=p.image_url||'';
+
+if(!value&&Array.isArray(p.image_urls)){
+value=p.image_urls[0]||'';
+}
+
+if(!value&&typeof p.image_urls==='string'){
+try{
+const parsed=JSON.parse(p.image_urls);
+if(Array.isArray(parsed))value=parsed[0]||'';
+}catch{}
+}
+return value||'';
+}
+
+function dryCart(){
+return cart.filter(isDryFruit);
+}
+
+function subtotal(){
+return dryCart().reduce((sum,p)=>
+sum+(priceOf(p)||0)*(Number(p.quantity)||1),0);
+}
+
+function saveCart(){
+localStorage.setItem('vikka_cart',JSON.stringify(cart));
+$('cartCount').textContent=cart.reduce((n,p)=>
+n+(Number(p.quantity)||1),0);
+updateMinimum();
+}
+
+function updateMinimum(){
+const total=subtotal();
+
+$('progressBar').style.width=
+Math.min(100,total/MINIMUM_ORDER*100)+'%';
+
+$('minimumStatus').textContent=
+'Your Dry Fruits cart: '+money(total)+
+' / '+money(MINIMUM_ORDER)+
+(total>=MINIMUM_ORDER?' — Minimum reached':
+' — Add '+money(MINIMUM_ORDER-total)+' more');
+}
+
+function showEmpty(message){
+const grid=$('productGrid');
+grid.replaceChildren();
+
+const empty=document.createElement('div');
+empty.className='empty-state';
+
+const icon=document.createElement('div');
+icon.className='empty-fruits';
+icon.textContent='🥜 🌰 🍇';
+
+const heading=document.createElement('h3');
+heading.textContent=message;
+
+const desc=document.createElement('p');
+desc.className='muted';
+desc.textContent=
+'Products will appear here once a seller uploads them and the Admin approves them.';
+
+const callout=document.createElement('div');
+callout.className='seller-callout';
+
+const text=document.createElement('strong');
+text.textContent=
+'Are you a Seller? Upload your Dry Fruits products and start selling on VIKKA STORE.';
+
+const link=document.createElement('a');
+link.href='seller-registration.html';
+link.textContent='Seller Registration ›';
+
+callout.append(text,link);
+empty.append(icon,heading,desc,callout);
+grid.appendChild(empty);
+}
+
+function addToCart(p){
+if(priceOf(p)===null){
+alert('Product price is not available.');
+return;
+}
+
+if(p.stock!==undefined&&Number(p.stock)<=0){
+alert('This product is currently unavailable.');
+return;
+}
+
+const id=p.id??nameOf(p);
+const found=cart.find(x=>
+String(x.id??nameOf(x))===String(id));
+
+if(found){
+found.quantity=(Number(found.quantity)||1)+1;
+}else{
+cart.push({...p,quantity:1});
+}
+
+saveCart();
+alert(nameOf(p)+' added to cart.');
+}
+
+function makeCard(p){
+const card=document.createElement('article');
+card.className='product-card';
+
+const img=document.createElement('img');
+img.className='product-image';
+img.src=imageOf(p);
+img.alt=nameOf(p);
+img.onerror=()=>{img.style.display='none';};
+
+if(!imageOf(p))img.style.display='none';
+card.appendChild(img);
+
+const h=document.createElement('h3');
+h.textContent=nameOf(p);
+card.appendChild(h);
+
+const price=document.createElement('div');
+price.className='price';
+price.textContent=
+priceOf(p)===null?'Price unavailable':money(priceOf(p));
+card.appendChild(price);
+
+const add=document.createElement('button');
+add.className='btn btn-blue wide';
+add.textContent='Add to Cart';
+add.disabled=priceOf(p)===null||
+(p.stock!==undefined&&Number(p.stock)<=0);
+add.onclick=()=>addToCart(p);
+card.appendChild(add);
+
+return card;
+}
+
+function renderProducts(){
+const term=$('search').value.trim().toLowerCase();
+
+const list=products.filter(p=>
+[nameOf(p),p.description||'',p.brand||'']
+.join(' ').toLowerCase().includes(term)
+);
+
+if(!list.length){
+showEmpty(products.length?
+'No matching Dry Fruits products found.':
+'No products found in the Dry Fruits category.');
+return;
+}
+
+const grid=$('productGrid');
+grid.replaceChildren();
+list.forEach(p=>grid.appendChild(makeCard(p)));
+}
+
+async function loadProducts(){
+$('productGrid').innerHTML=
+'<div class="empty-state">Loading Dry Fruits products...</div>';
+
+try{
+if(!window.supabase?.createClient){
+throw new Error('Supabase library not available.');
+}
+
+if(!db){
+db=window.supabase.createClient(
+SUPABASE_URL,SUPABASE_KEY
+);
+}
+
+const {data:oldProducts,error:oldError}=await db
+.from('products')
+.select('*');
+
+if(oldError)throw oldError;
+
+let sellerProducts=[];
+
+const {data:sellerData,error:sellerError}=await db
+.from('seller_products')
+.select('*')
+.eq('status','approved');
+
+if(sellerError){
+console.warn(sellerError.message);
+}else{
+sellerProducts=Array.isArray(sellerData)?sellerData:[];
+}
+
+products=[
+...(Array.isArray(oldProducts)?oldProducts:[]),
+...sellerProducts
+].filter(isDryFruit);
+
+renderProducts();
+
+}catch(err){
+console.error('VIKKA Dry Fruits error:',err);
+showEmpty('Products could not be loaded. Please refresh.');
+}
+}
+
+function renderCart(){
+const list=dryCart();
+const wrap=$('cartItems');
+wrap.replaceChildren();
+
+if(!list.length){
+wrap.textContent='Your Dry Fruits cart is empty.';
+}
+
+list.forEach(p=>{
+const row=document.createElement('div');
+row.className='cart-row';
+
+const info=document.createElement('span');
+info.textContent=nameOf(p)+' × '+(Number(p.quantity)||1);
+
+const price=document.createElement('strong');
+price.textContent=money(
+(priceOf(p)||0)*(Number(p.quantity)||1)
+);
+
+row.append(info,price);
+wrap.appendChild(row);
+});
+
+const total=subtotal();
+$('cartTotal').textContent='Dry Fruits Total: '+money(total);
+
+$('cartRule').textContent=total>=MINIMUM_ORDER?
+'Minimum order reached.':
+'Minimum order ₹2,000. Add '+money(MINIMUM_ORDER-total)+' more.';
+
+$('checkoutBtn').disabled=total<MINIMUM_ORDER;
+}
+
+document.querySelectorAll('[data-close]').forEach(b=>{
+b.onclick=()=>
+$(b.dataset.close).classList.remove('show');
+});
+
+$('cartBtn').onclick=()=>{
+renderCart();
+$('cartOverlay').classList.add('show');
+};
+
+$('checkoutBtn').onclick=()=>{
+if(subtotal()<MINIMUM_ORDER){
+alert('Dry Fruits minimum order is ₹2,000.');
+return;
+}
+
+localStorage.setItem('vikka_cart',JSON.stringify(cart));
+localStorage.setItem(
+'vikka_checkout_scope','masala_dry_fruits'
+);
+
+location.href='checkout.html';
+};
+
+$('search').addEventListener('input',renderProducts);
+$('refreshBtn').onclick=loadProducts;
+$('year').textContent=new Date().getFullYear();
+
+saveCart();
+loadProducts();
+</script>
+
+</body>
+</html>
