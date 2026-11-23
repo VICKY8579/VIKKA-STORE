@@ -70,8 +70,14 @@ let sellerData=[];
 let orderInProgress=false;
 
 try{
+ const buyNow=JSON.parse(localStorage.getItem('vikka_buy_now')||'null');
+
+if(buyNow && typeof buyNow==='object' && !Array.isArray(buyNow)){
+ cart=[buyNow];
+}else{
  cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
  if(!Array.isArray(cart)) cart=[];
+}
 }catch(e){
  cart=[];
 }
