@@ -363,6 +363,15 @@ add.disabled=p.stock!==undefined&&Number(p.stock)<=0;
 add.addEventListener('click',()=>addToCart(p));
 
 actions.append(details,add);
+  const buy=document.createElement('button');
+buy.className='btn btn-orange';
+buy.textContent='Buy Now';
+buy.disabled=p.stock!==undefined&&Number(p.stock)<=0;
+buy.addEventListener('click',()=>{
+  localStorage.setItem('vikka_buy_now',JSON.stringify({...p,quantity:1}));
+  window.location.href='checkout.html';
+});
+actions.appendChild(buy);
 card.appendChild(actions);
 
 return card;
