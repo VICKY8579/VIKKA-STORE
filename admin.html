@@ -472,20 +472,32 @@ async function saveProduct(){
 
 
 // LOAD PRODUCTS
+// LOAD ALL PRODUCTS: STORE + APPROVED SELLER PRODUCTS
 async function loadProducts(){
  if(!currentUser) return;
 
  el("productList").textContent = "Loading products...";
 
  try{
-  const {data,error} = await db
+  const {data:ownData,error:ownError} = await db
    .from("products")
    .select("*")
    .order("id",{ascending:false});
 
-  if(error) throw error;
+  if(ownError) throw ownError;
 
-  products = data || [];
+  const {data:sellerData,error:sellerError} = await db
+   .from("seller_products")
+   .select("*")
+   .eq("status","approved")
+   .order("created_at",{ascending:false});
+
+  if(sellerError) throw sellerError;
+
+  products = [
+   ...(ownData||[]).map(p=>({...p,_source:"products"})),
+   ...(sellerData||[]).map(p=>({...p,_source:"seller_products"}))
+  ];
 
   el("total").textContent = products.length;
   el("active").textContent =
