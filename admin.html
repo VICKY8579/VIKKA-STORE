@@ -420,9 +420,8 @@ async function saveProduct(){
  const stock = Number(el("stock").value);
  const image = el("imageUrl").value.trim();
 
- if(!name || priceText==="" || !image){
-  alert("Product Name, Price and Image URL required");
-  return;
+ if(!name || priceText===""){
+alert("Product Name and Price required");  return;
  }
 
  if(!Number.isFinite(price) || price<=0 ||
