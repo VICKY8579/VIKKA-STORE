@@ -70,18 +70,22 @@ let sellerData=[];
 let orderInProgress=false;
 
 try{
+ const checkoutScope=localStorage.getItem('vikka_checkout_scope');
+ const savedCart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
  const buyNow=JSON.parse(localStorage.getItem('vikka_buy_now')||'null');
 
-if(buyNow && typeof buyNow==='object' && !Array.isArray(buyNow)){
- cart=[buyNow];
-}else{
- cart=JSON.parse(localStorage.getItem('vikka_cart')||'[]');
- if(!Array.isArray(cart)) cart=[];
-}
+ if(checkoutScope==='masala_dry_fruits'){
+  cart=Array.isArray(savedCart)?savedCart:[];
+  localStorage.removeItem('vikka_buy_now');
+  localStorage.removeItem('vikka_checkout_scope');
+ }else if(buyNow && typeof buyNow==='object' && !Array.isArray(buyNow)){
+  cart=[buyNow];
+ }else{
+  cart=Array.isArray(savedCart)?savedCart:[];
+ }
 }catch(e){
  cart=[];
 }
-
 function price(p){
  return Number(p.price||p.selling_price||0);
 }
