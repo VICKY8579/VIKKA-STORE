@@ -671,6 +671,42 @@ function escapeHTML(value){
 
 
 // PRODUCT SEARCH
+ function filterProducts(){
+ const q = (el("search").value || "").toLowerCase();
+
+ const filtered = products.filter(p =>
+  (p.name || "").toLowerCase().includes(q) ||
+  (p.brand || "").toLowerCase().includes(q) ||
+  (p.category || "").toLowerCase().includes(q)
+ );
+
+ el("productList").innerHTML = filtered.map(p => `
+  <div class="product">
+   <img src="${escapeHTML(p.image || p.image_url || "")}"
+    onerror="this.style.display='none'" alt="Product">
+
+   <h4>${escapeHTML(p.name || "")}</h4>
+   <p>Brand: ${escapeHTML(p.brand || "-")}</p>
+   <b>₹${Number(p.price || 0)}</b>
+   <p>MRP: ₹${Number(p.mrp || 0)}</p>
+   <p>Stock: ${Number(p.stock || 0)}</p>
+   <p>${p.is_active === false ? "INACTIVE" : "ACTIVE"}</p>
+
+   <div class="actions">
+    <button class="yellow"
+     onclick="editProduct('${escapeHTML(p.id)}')">Edit</button>
+
+    <button class="gray"
+     onclick="toggleProduct('${escapeHTML(p.id)}')">
+     ${p.is_active === false ? "Activate" : "Hide"}
+    </button>
+
+    <button class="red"
+     onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
+   </div>
+  </div>
+ `).join("") || "<p>No products found.</p>";
+}
 // ADMIN PRICE UPDATE
 async function updateAnyProductPrice(id, source, newPrice){
 
