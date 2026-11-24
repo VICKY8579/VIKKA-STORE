@@ -444,27 +444,46 @@ async function saveProduct(){
   is_active:el("isActive").checked
  };
 
- const id = el("editId").value;
- el("saveBtn").disabled = true;
- el("productMsg").textContent = "Saving...";
+ const editValue = el("editId").value;
+const isSellerProduct = editValue.startsWith("seller_products:");
+const id = editValue.includes(":")
+ ? editValue.substring(editValue.indexOf(":") + 1)
+ : editValue;
 
- try{
-  let result;
+el("saveBtn").disabled = true;
+el("productMsg").textContent = "Saving...";
 
-  if(id){
-   result = await db.from("products")
-    .update(productData).eq("id",id);
+try{
+ let result;
+
+ if(id){
+  if(isSellerProduct){
+   const sellerProductData = {
+    name: name,
+    category: el("category").value,
+    price: price,
+    stock: stock,
+    description: el("description").value.trim(),
+    image_url: image,
+    is_active: el("isActive").checked
+   };
+
+   result = await db.from("seller_products")
+    .update(sellerProductData).eq("id", id);
   }else{
    result = await db.from("products")
-    .insert(productData);
+    .update(productData).eq("id", id);
   }
+ }else{
+  result = await db.from("products").insert(productData);
+ }
 
   if(result.error) throw result.error;
 
   clearForm();
   el("productMsg").textContent = "Product saved successfully.";
   await loadProducts();
-
+await loadApprovedSellerProducts();
  }catch(error){
   el("productMsg").textContent = "Save failed: "+error.message;
  }finally{
@@ -694,8 +713,7 @@ function escapeHTML(value){
 
    <div class="actions">
     <button class="yellow"
-     onclick="editProduct('${escapeHTML(p.id)}')">Edit</button>
-
+onclick="editProduct('${escapeHTML(p.id)}','${p._source || "products"}')">Edit</button>
     <button class="gray"
      onclick="toggleProduct('${escapeHTML(p.id)}')">
      ${p.is_active === false ? "Activate" : "Hide"}
@@ -743,29 +761,30 @@ await loadApprovedSellerProducts();
 
 
 // EDIT PRODUCT
-function editProduct(id){
- const p = products.find(x=>String(x.id)===String(id));
+function editProduct(id, source){
+ const p = products.find(x => String(x.id) === String(id));
  if(!p) return;
 
- el("editId").value = p.id;
- el("name").value = p.name||"";
- el("category").value = p.category||"CLOTHING";
- el("brand").value = p.brand||"";
- el("price").value = p.price??"";
- el("mrp").value = p.mrp??"";
- el("stock").value = p.stock??0;
- el("imageUrl").value = p.image||p.image_url||"";
- el("description").value = p.description||"";
- el("isActive").checked = p.is_active!==false;
+ const table = source || p._source || "products";
+ el("editId").value = table + ":" + p.id;
+
+ el("name").value = p.name || "";
+ el("category").value = p.category || "CLOTHING";
+ el("brand").value = p.brand || "";
+ el("price").value = p.price ?? "";
+ el("mrp").value = p.mrp ?? "";
+ el("stock").value = p.stock ?? 0;
+ el("imageUrl").value = p.image || p.image_url || "";
+ el("description").value = p.description || "";
+ el("isActive").checked = p.is_active !== false;
 
  previewImage();
  el("formTitle").textContent = "✏️ Edit Product";
  el("saveBtn").textContent = "Update Product";
 
- showTab("products",document.querySelectorAll(".nav button")[1]);
- window.scrollTo({top:0,behavior:"smooth"});
+ showTab("products", document.querySelectorAll(".nav button")[1]);
+ window.scrollTo({top:0, behavior:"smooth"});
 }
-
 
 // HIDE / ACTIVATE
 async function toggleProduct(id){
@@ -782,6 +801,7 @@ async function toggleProduct(id){
  }
 
  await loadProducts();
+ 
 }
 
 
