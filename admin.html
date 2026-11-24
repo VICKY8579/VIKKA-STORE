@@ -413,13 +413,12 @@ async function saveProduct(){
   return;
  }
 
- const name = el("name").value.trim();
- const priceText = el("price").value;
- const price = Number(priceText);
- const mrp = Number(el("mrp").value) || 0;
- const stock = Number(el("stock").value);
- const image = el("imageUrl").value.trim();
-
+ const name = document.getElementById("name").value.trim();
+const priceText = document.getElementById("price").value;
+const price = Number(priceText);
+const mrp = Number(document.getElementById("mrp").value) || 0;
+const stock = Number(document.getElementById("stock").value);
+const image = document.getElementById("imageUrl").value.trim();
  if(!name || priceText===""){
 alert("Product Name and Price required");  return;
  }
