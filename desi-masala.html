@@ -544,16 +544,62 @@ wrap.textContent='Your Desi Masala cart is empty.';
 list.forEach(p=>{
 const row=document.createElement('div');
 row.className='cart-row';
-row.textContent=nameOf(p)+' × '+p.quantity+
-' — '+money((priceOf(p)||0)*p.quantity);
+
+const info=document.createElement('span');
+info.textContent=nameOf(p);
+
+const controls=document.createElement('div');
+controls.className='qty';
+
+const minus=document.createElement('button');
+minus.textContent='−';
+
+const count=document.createElement('strong');
+count.textContent=Number(p.quantity)||1;
+
+const plus=document.createElement('button');
+plus.textContent='+';
+
+const remove=document.createElement('button');
+remove.textContent='Remove';
+
+minus.onclick=()=>{
+p.quantity=(Number(p.quantity)||1)-1;
+if(p.quantity<=0){
+cart=cart.filter(x=>x!==p);
+}
+saveCart();
+renderCart();
+};
+
+plus.onclick=()=>{
+p.quantity=(Number(p.quantity)||1)+1;
+saveCart();
+renderCart();
+};
+
+remove.onclick=()=>{
+cart=cart.filter(x=>x!==p);
+saveCart();
+renderCart();
+};
+
+controls.append(minus,count,plus,remove);
+
+const amount=document.createElement('strong');
+amount.textContent=money((priceOf(p)||0)*(Number(p.quantity)||1));
+
+row.append(info,controls,amount);
 wrap.appendChild(row);
 });
 
 const total=subtotal();
 $('cartTotal').textContent='Total: '+money(total);
+
 $('cartRule').textContent=total>=MINIMUM_ORDER?
 'Minimum order reached.':
 'Minimum order ₹2,000. Add '+money(MINIMUM_ORDER-total)+' more.';
+
 $('checkoutBtn').disabled=total<MINIMUM_ORDER;
 }
 
