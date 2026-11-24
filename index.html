@@ -652,77 +652,68 @@ $('logoutBtn').style.display='none';
 }
 
 async function loadProducts(){
-showStatus('Loading products...');
+  showStatus('Loading products...');
 
-if(!window.supabase?.createClient){
-showStatus('Internet or Supabase library not available. Tap Try Again.',true);
-return;
-}
+  if(!window.supabase?.createClient){
+    showStatus('Internet or Supabase library not available. Tap Try Again.',true);
+    return;
+  }
 
-try{
+  try{
+    if(!db){
+      db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    }
 
-// Create the Supabase connection only once.
-if(!db){
-db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-}
+    // Load active own/store products
+    const {data:oldProducts,error:oldError}=await db
+      .from('products')
+      .select('*')
+      .eq('is_active',true);
 
-// Load the existing products.
-const {data:oldProducts,error:oldError}=await db
-.from('products')
-.select('*');
+    if(oldError) throw oldError;
 
-if(oldError)throw oldError;
+    // Load approved and active seller products
+    const {data:sellerData,error:sellerError}=await db
+      .from('seller_products')
+      .select('*')
+      .eq('status','approved')
+      .eq('is_active',true);
 
-// Load only approved seller products.
-let sellerProducts=[];
+    if(sellerError) throw sellerError;
 
-const {data:sellerData,error:sellerError}=await db
-.from('seller_products')
-.select('*')
-.eq('status','approved');
+    const sellerProducts=Array.isArray(sellerData)?sellerData:[];
 
-if(sellerError){
-console.warn('Seller products could not be loaded:',sellerError.message);
-}else{
-sellerProducts=Array.isArray(sellerData)?sellerData:[];
-}
+    allProducts=[
+      ...(Array.isArray(oldProducts)?oldProducts:[]),
+      ...sellerProducts
+    ];
 
-// Combine both product lists.
-allProducts=[
-...(Array.isArray(oldProducts)?oldProducts:[]),
-...sellerProducts
-];
+    buildCategories();
+    renderProducts();
 
-buildCategories();
-renderProducts();
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
 
-// Load customer login session.
-const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError) console.warn(sessionError.message);
 
-if(sessionError){
-console.warn(sessionError.message);
-}
+    currentSession=sessionData?.session||null;
+    updateAccountUI();
 
-currentSession=sessionData?.session||null;
-updateAccountUI();
+    if(!window.__vikkaAuthListener){
+      window.__vikkaAuthListener=true;
 
-// Attach the authentication listener only once.
-if(!window.__vikkaAuthListener){
-window.__vikkaAuthListener=true;
+      db.auth.onAuthStateChange((_event,session)=>{
+        currentSession=session;
+        updateAccountUI();
+      });
+    }
 
-db.auth.onAuthStateChange((_event,session)=>{
-currentSession=session;
-updateAccountUI();
-});
-}
-
-}catch(err){
-console.error('VIKKA error:',err);
-showStatus(
-'Products load nahi hue: '+(err.message||'Supabase connection check karein.'),
-true
-);
-}
+  }catch(err){
+    console.error('VIKKA error:',err);
+    showStatus(
+      'Products load nahi hue: '+(err.message||'Supabase connection check karein.'),
+      true
+    );
+  }
 }
 
 $('search').addEventListener('input',renderProducts);
