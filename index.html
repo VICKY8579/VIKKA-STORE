@@ -39,8 +39,16 @@ button{cursor:pointer}
 main{padding:0 5% 36px}
 h2{color:var(--navy);margin:22px 0 12px}
 .category-list{display:flex;gap:8px;flex-wrap:wrap}
-.category{border:1px solid var(--navy);background:white;color:var(--navy);border-radius:22px;padding:9px 14px}
-.category.active{background:var(--navy);color:white}
+.category{border:0;color:white;border-radius:22px;padding:9px 14px;font-weight:600}
+.category.active{outline:3px solid #142b4a;outline-offset:2px}
+.category:nth-child(1){background:#142b4a}
+.category:nth-child(2){background:#38BDF8}
+.category:nth-child(3){background:#15803D}
+.category:nth-child(4){background:#C2410C}
+.category:nth-child(5){background:#DC2626}
+.category:nth-child(6){background:#7C3AED}
+.category:nth-child(7){background:#475569}
+.category:nth-child(8){background:#BE185D}
 .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:15px}
 .product-card{background:white;border-radius:11px;padding:12px;box-shadow:0 2px 10px #0000000d;min-width:0}
 .product-image{height:170px;width:100%;object-fit:contain;background:#f3f5f7;border-radius:8px}
@@ -337,26 +345,46 @@ if(e.target===o)closeOverlay(o.id);
 });
 });
 
+function normalizeCategory(value){
+  const c=String(value||'').trim().toLowerCase();
+
+  if(c==='clothing') return 'Clothing';
+  if(c==='general'||c==='kitchen') return 'Kitchen';
+  if(c==='dry fruits'||c==='dry-fruits'||c==='dry fruit') return 'Dry Fruits';
+  if(c==="kids clothes"||c==="kid's clothes"||c==='kids clothing') return 'Kids Clothes';
+  if(c==='electronic'||c==='electronics') return 'Electronic';
+  if(c==='desi masala'||c==='desi-masala') return 'Desi Masala';
+if(c==='brand') return 'Brand';
+  return c;
+}
+
 function buildCategories(){
-const names=['All',...new Set(
-allProducts.map(p=>String(p.category||'').trim()).filter(Boolean)
-)];
+  const names=[
+    'All',
+    'Clothing',
+    'Kitchen',
+    'Dry Fruits',
+    'Desi Masala',
+    'Kids Clothes',
+    'Electronic',
+    'Brand'
+  ];
 
-$('categories').replaceChildren();
+  $('categories').replaceChildren();
 
-names.forEach(name=>{
-const b=document.createElement('button');
-b.className='category'+(selectedCategory===name?' active':'');
-b.textContent=name==='All'?'All Products':name;
+  names.forEach(name=>{
+    const b=document.createElement('button');
+    b.className='category'+(selectedCategory===name?' active':'');
+    b.textContent=name==='All'?'All Products':name;
 
-b.addEventListener('click',()=>{
-selectedCategory=name;
-buildCategories();
-renderProducts();
-});
+    b.addEventListener('click',()=>{
+      selectedCategory=name;
+      buildCategories();
+      renderProducts();
+    });
 
-$('categories').appendChild(b);
-});
+    $('categories').appendChild(b);
+  });
 }
 
 function createCard(p){
@@ -439,9 +467,10 @@ return card;
 function renderProducts(){
 const term=$('search').value.trim().toLowerCase();
 
-let visible=allProducts.filter(p=>{
-  const category=String(p.category||'').trim().toLowerCase();
-  const selected=String(selectedCategory||'All').trim().toLowerCase();
+const visible=allProducts.filter(p=>{
+  const category=String(p.category||'').trim();
+  const categoryKey=normalizeCategory(category);
+  const selectedKey=normalizeCategory(selectedCategory);
 
   const hay=[
     productName(p),
@@ -449,7 +478,8 @@ let visible=allProducts.filter(p=>{
     category,
     p.brand||''
   ].join(' ').toLowerCase();
-return (selectedCategory==='All'||category===selectedCategory)&&hay.includes(term);
+
+  return (selectedKey==='all'||categoryKey===selectedKey)&&hay.includes(term);
 });
   
 
