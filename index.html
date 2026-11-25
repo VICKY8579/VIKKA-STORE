@@ -440,16 +440,18 @@ function renderProducts(){
 const term=$('search').value.trim().toLowerCase();
 
 let visible=allProducts.filter(p=>{
-const category=String(p.category||'');
-const hay=[
-productName(p),
-p.description||'',
-category,
-p.brand||''
-].join(' ').toLowerCase();
+  const category=String(p.category||'').trim().toLowerCase();
+  const selected=String(selectedCategory||'All').trim().toLowerCase();
 
+  const hay=[
+    productName(p),
+    p.description||'',
+    category,
+    p.brand||''
+  ].join(' ').toLowerCase();
 return (selectedCategory==='All'||category===selectedCategory)&&hay.includes(term);
 });
+  
 
 const sort=$('sortProducts').value;
 
