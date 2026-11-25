@@ -713,12 +713,12 @@ function escapeHTML(value){
     <button class="yellow"
 onclick="editProduct('${escapeHTML(p.id)}','${p._source || "products"}')">Edit</button>
     <button class="gray"
-     onclick="toggleProduct('${escapeHTML(p.id)}')">
+     onclick="toggleProduct('${escapeHTML(p.id)}','${p._source || "products"}')"
      ${p.is_active === false ? "Activate" : "Hide"}
     </button>
 
     <button class="red"
-     onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
+     onclick="deleteProduct('${escapeHTML(p.id)}','${p._source || "products"}')">Delete</button>
    </div>
   </div>
  `).join("") || "<p>No products found.</p>";
@@ -785,37 +785,48 @@ function editProduct(id, source){
 }
 
 // HIDE / ACTIVATE
-async function toggleProduct(id){
- const p = products.find(x=>String(x.id)===String(id));
- if(!p) return;
+async function toggleProduct(id, source){
+  const table = source === "seller_products" ? "seller_products" : "products";
+  const p = products.find(x => String(x.id) === String(id) && x._source === (source || "products"));
+  if(!p) return;
 
- const {error} = await db.from("products")
-  .update({is_active:p.is_active===false})
-  .eq("id",id);
+  const {error} = await db.from(table)
+    .update({is_active: p.is_active === false})
+    .eq("id", id);
 
- if(error){
-  alert(error.message);
-  return;
- }
+  if(error){
+    alert(error.message);
+    return;
+  }
 
- await loadProducts();
- 
+  await loadProducts();
 }
 
 
 // DELETE
-async function deleteProduct(id){
- if(!confirm("Delete this product permanently?")) return;
+// DELETE PRODUCT
+async function deleteProduct(id, source){
+  if(!confirm("Delete this product permanently?")) return;
 
- const {error} = await db.from("products")
-  .delete().eq("id",id);
+  const table = source === "seller_products"
+    ? "seller_products"
+    : "products";
 
- if(error){
-  alert("Delete failed: "+error.message);
-  return;
- }
+  const {error} = await db
+    .from(table)
+    .delete()
+    .eq("id", id);
 
- await loadProducts();
+  if(error){
+    alert("Delete failed: " + error.message);
+    return;
+  }
+
+  alert("Product deleted successfully.");
+
+  await loadProducts();
+  await loadSellerProducts();
+  await loadApprovedSellerProducts();
 }
 
 
