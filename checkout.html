@@ -53,6 +53,9 @@ button:disabled{opacity:.6;cursor:wait}
 <div class="card">
 <h2>Place Order</h2>
 <input id="utr" placeholder="UPI Transaction / UTR Number">
+ <label for="customerNote">Product Details / Customer Instructions (Optional)</label>
+<textarea id="customerNote" rows="4" maxlength="1000"
+placeholder="Write your choice here (Max 100 words). Example: Black T-shirt, Size 44 or Kaju 500 gm"></textarea>
 <button id="orderButton" onclick="placeOrder()">Place Order</button>
 <p id="message"></p>
 </div>
@@ -197,6 +200,7 @@ async function placeOrder(){
  const a=document.getElementById('address').value.trim();
  const pin=document.getElementById('pin').value.trim();
  const utr=document.getElementById('utr').value.trim();
+ const customerNote=document.getElementById('customerNote').value.trim();
 
  const message=document.getElementById('message');
  const button=document.getElementById('orderButton');
@@ -288,11 +292,13 @@ if (dryFruitsTotal > 0 && dryFruitsTotal < 2000) {
      pin_code:pin,
      subtotal:subtotal,
      payment_utr:utr||null,
-     payment_status:'pending',
-     order_status:'pending'
+    
+customer_note:customerNote,
+payment_status:'pending',
+order_status:'pending'
+    
     });
-
-   if(orderError){
+if(orderError){
     throw new Error(
      'Order could not be saved: '+orderError.message
     );
